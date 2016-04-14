@@ -12,7 +12,56 @@ VAR.D <- .1
 INCLUDE.CHRS <- 1:NCHR
 
 # We create this map in order to use the real genomic map distance
-map.pos <- c(249238555, 242900000, 197900000, 199150000, 180750000, 170955878, 159167276, 146364984, 141088894, 135526070, 135002856, 133841619, 115148564, 105826742,  102484095, 90201263, 81100000, 78062535, 59160912, 6.3e+07, 48157860, 51246300)
+# genotypes and cvs should be in range of genomic map
+map.pos <- matrix(ncol=2,nrow=22)
+map.pos[ 1 ,1] <-  738555
+map.pos[ 2 ,1] <-  1
+map.pos[ 3 ,1] <-  1
+map.pos[ 4 ,1] <-  1
+map.pos[ 5 ,1] <-  1
+map.pos[ 6 ,1] <-  105878
+map.pos[ 7 ,1] <-  567276
+map.pos[ 8 ,1] <-  64984
+map.pos[ 9 ,1] <-  88894
+map.pos[ 10 ,1] <-  26070
+map.pos[ 11 ,1] <-  102856
+map.pos[ 12 ,1] <-  91619
+map.pos[ 13 ,1] <-  19198564
+map.pos[ 14 ,1] <-  20326742
+map.pos[ 15 ,1] <-  22684095
+map.pos[ 16 ,1] <-  1263
+map.pos[ 17 ,1] <-  1
+map.pos[ 18 ,1] <-  12535
+map.pos[ 19 ,1] <-  160912
+map.pos[ 20 ,1] <-  1
+map.pos[ 21 ,1] <-  15107860
+map.pos[ 22 ,1] <-  17096300
+
+map.pos[ 1 ,2] <-  249238555
+map.pos[ 2 ,2] <-  242900000
+map.pos[ 3 ,2] <-  197900000
+map.pos[ 4 ,2] <-  1.91e+08
+map.pos[ 5 ,2] <-  180750000
+map.pos[ 6 ,2] <-  170955878
+map.pos[ 7 ,2] <-  159167276
+map.pos[ 8 ,2] <-  146364984
+map.pos[ 9 ,2] <-  141088894
+map.pos[ 10 ,2] <-  135526070
+map.pos[ 11 ,2] <-  135002856
+map.pos[ 12 ,2] <-  133841619
+map.pos[ 13 ,2] <-  115148564
+map.pos[ 14 ,2] <-  105826742
+map.pos[ 15 ,2] <-  102484095
+map.pos[ 16 ,2] <-  90201263
+map.pos[ 17 ,2] <-  81100000
+map.pos[ 18 ,2] <-  78062535
+map.pos[ 19 ,2] <-  59160912
+map.pos[ 20 ,2] <-  6.3e+07
+map.pos[ 21 ,2] <-  48157860
+map.pos[ 22 ,2] <-  51246300
+
+
+
 
 
 
@@ -34,7 +83,7 @@ for (ichr in 1:NCHR)
     write.table(hap, file=paste("ref.chr",ichr,".hap",sep=''), quote=FALSE,row.names=FALSE, col.names=FALSE)
     # creating ref.legend file
     legend.id <- paste("rs",1:nsnp_chr,sep='')
-    legend.pos <- sort(sample(map.pos[ichr], nsnp_chr, replace = FALSE))
+    legend.pos <- sort(sample(map.pos[ichr,1]:map.pos[ichr,2], nsnp_chr, replace = FALSE))
     legend.al0 <- rep("C", nsnp_chr)
     legend.al1 <- rep("T", nsnp_chr)
     write.table(cbind(legend.id,legend.pos,legend.al0,legend.al1), file=paste("ref.chr",ichr,".legend",sep=''), quote=FALSE,row.names=FALSE, col.names=FALSE)
@@ -104,6 +153,7 @@ SELECTION.FUNCTION.PAR2 <- rep(0,NUM.GENERATIONS) #Selection function for each g
 
 ###########popinfo.txt
 write.table(cbind(POP.SIZE,PHENO.MATE.COR,OFFSPRING_DIST,SELECTION.FUNCTION,SELECTION.FUNCTION.PAR1,SELECTION.FUNCTION.PAR2), file=paste("par.pop1.info.txt",sep=''),quote=FALSE,row.names=FALSE, col.names=c("pop_size","mat_cor","offspring_dist","selection_func","selection_func_par1","selection_func_par2"))
+
 
 
 
