@@ -18,8 +18,6 @@ OR, you can type the following commands in the terminal:
 To compile GeneEvolve, run the following commands:
 
     cd GeneEvolve-master /
-    unzip GeneEvolve.zip
-    cd GeneEvolve
     make
     cd bin
     ./GeneEvolve --help
