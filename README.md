@@ -25,4 +25,8 @@ To compile GeneEvolve, run the following commands:
 
 
 # Documentation
-The Documentation file is available in the main directory: “Help_GeneEvolve_Main.pdf”.
+The Documentation file is available in the main directory: `Help_GeneEvolve_Main.pdf`.
+
+# Examples
+There is `Examples.zip` file in the main directory. Detailed explnation for using these examples are in the documentation file: `Help_GeneEvolve_Main.pdf`.
+
