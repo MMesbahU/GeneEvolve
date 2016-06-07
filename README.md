@@ -18,6 +18,7 @@ OR, you can type the following commands in the terminal:
 To compile GeneEvolve, run the following commands:
 
     cd GeneEvolve-master /
+    module load gcc/gcc-4.9.2
     make
     cd bin
     ./GeneEvolve --help
