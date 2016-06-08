@@ -11,17 +11,18 @@ To download “GeneEvolve”, you can push the green button “Clone or Download
 Or,
     
     git clone https://github.com/rtahmasbi/GeneEvolve
+    cd GeneEvolve
     
 Or, you can type the following commands in the terminal:
 
     wget https://github.com/rtahmasbi/GeneEvolve/archive/master.zip
     unzip master
+    cd GeneEvolve-master /
 
 
 # Compile
 To compile GeneEvolve, run the following commands:
 
-    cd GeneEvolve-master /
     make
     cd bin
     ./GeneEvolve --help
