@@ -1,6 +1,6 @@
 # Name of your executable, replace sampleProgram with your program name
 EXE=GeneEvolve
-OPTFLAG_OPT = -O4 -std=c++11
+OPTFLAG_OPT = -O4 -std=c++0x
 OPTFLAG_DEBUG = -ggdb -O0
 ########################
 # Specify your Files:
