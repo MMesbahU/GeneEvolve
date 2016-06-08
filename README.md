@@ -8,12 +8,12 @@ GeneEvolve runs forward-in-time, which allows it to provide a wide range of scen
 # Download
 To download “GeneEvolve”, you can push the green button “Clone or Download” and then “Download ZIP”.
 
-Or,
+Or, you can type the following commands in the terminal:
     
     git clone https://github.com/rtahmasbi/GeneEvolve
     cd GeneEvolve
     
-Or, you can type the following commands in the terminal:
+Or,
 
     wget https://github.com/rtahmasbi/GeneEvolve/archive/master.zip
     unzip master
