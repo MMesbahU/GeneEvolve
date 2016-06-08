@@ -17,7 +17,7 @@ Or, you can type the following commands in the terminal:
 
     wget https://github.com/rtahmasbi/GeneEvolve/archive/master.zip
     unzip master
-    cd GeneEvolve-master /
+    cd GeneEvolve-master
 
 
 # Compile
