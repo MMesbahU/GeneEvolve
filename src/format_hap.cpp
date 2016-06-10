@@ -30,6 +30,31 @@ bool format_hap::write_hap(Hap_SNP &hap_snp, std::string file_out_name)
 }
 
 
+
+
+// create .indv files
+// create a file for each chromosome
+bool format_hap::write_indv(std::vector<unsigned long int> &indv_id, std::string file_out_name)
+{
+    std::string f_out=file_out_name + ".indv";
+    unsigned long int nind=indv_id.size();
+    
+    std::ofstream outfile;
+    outfile.open(f_out.c_str());
+    
+    for (unsigned long int ih=0; ih<nind; ih++)
+    {
+        outfile << indv_id[ih] << std::endl;
+    }
+    
+    outfile.close();
+    
+    return true;
+}
+
+
+
+
 // no header: nrow=nsnps, ncols=2*nind
 // we convert it to nrow=2*nind, ncol=nsnps
 // input : std::string f_name, long int nind, long int nsnp, bool show_iterations

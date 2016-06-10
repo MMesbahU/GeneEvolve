@@ -4,6 +4,7 @@
 #include <ostream>
 #include <iostream>
 #include <ctime>
+#include <chrono> // for seconds, milliseconds, nanoseconds, picoseconds
 #include <string> // str1.compare(str2)
 //#include "Parameters.h"
 //#include "StringBasics.h"
@@ -25,6 +26,7 @@ void helpFile();
 bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par);
 bool parameter_check(Parameters &par);
 bool parameter_print(Parameters &par);
+unsigned ras_now_nanoseconds(void);
 
 
 int main(int argc, char ** argv)
@@ -170,7 +172,7 @@ void helpFile()
 
     std::cout << std::endl;
     printf(" --------- Immigration parameters\n");
-    printf("        --file_migration        : [filename]\n");
+    printf("        --file_migration         : [filename]\n");
     
     std::cout << std::endl;
     printf(" --------- Environmental effects specific to each population (for each phenotype)\n");
@@ -178,6 +180,7 @@ void helpFile()
     
     std::cout << std::endl;
     printf(" --------- Other parameters\n");
+    printf("        --seed                   : [0]  ->  can be any passitive number.\n");
     printf("        --avoid_inbreeding       : [Off]  ->  [On] means no inbreeding.\n");
     printf("        --debug                  : [Off]\n");
     printf("        --prefix                 : [out]\n");
@@ -281,6 +284,9 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
         else if(vec_arg[i]=="--avoid_inbreeding"){
             par.avoid_inbreeding=true;
         }
+        else if(vec_arg[i]=="--seed"){
+            par._seed=std::stod(vec_arg[++i]);
+        }
         else if(vec_arg[i]=="--debug"){
             par.debug=true;
         }
@@ -368,6 +374,12 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
     {
         par._gamma.resize(par.file_cv_info[0].size(),0); // set 0 for all phenotypes
     }
+    //_seed
+    if(par._seed==0)
+    {
+        par._seed=ras_now_nanoseconds();
+    }
+    
     
     return true;
 }
@@ -520,6 +532,12 @@ bool parameter_check(Parameters &par)
         return false;
     }
 
+    //_seed
+    if (par._seed<0)
+    {
+        std::cout << "Eroor: the parameter [--seed] can't be negative." << std::endl;
+    }
+    
     //check migration
     if (par.file_gen_info.size()>1 && par.file_migration.size()==0)
     {
@@ -587,6 +605,7 @@ bool parameter_print(Parameters &par)
     }
     
     std::cout << "  Other parameters" << std::endl;
+    std::cout << "      --seed                   : [" << par._seed << "]" << std::endl;
     std::cout << "      --avoid_inbreeding       : [" << (par.avoid_inbreeding ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --debug                  : [" << (par.debug ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --prefix                 : [" << par.prefix << "]" << std::endl;
@@ -596,6 +615,14 @@ bool parameter_print(Parameters &par)
     std::cout << "      --output_all_generations : [" << (par.output_all_generations ? "On" : "Off") << "]" << std::endl;
     std::cout << std::endl;
     return true;
+}
+
+
+
+unsigned ras_now_nanoseconds(void)
+{
+    std::chrono::nanoseconds ns = std::chrono::duration_cast< std::chrono::nanoseconds >(std::chrono::system_clock::now().time_since_epoch());
+    return unsigned(ns.count() % 100000000)+std::rand();
 }
 
 

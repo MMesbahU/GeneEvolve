@@ -206,7 +206,7 @@ int Population::ras_read_cv_info(std::string f_name, int iphen)
 }
 
 
-// THIS IS FOR A and Dominance
+// THIS IS FOR Additive and Dominance
 
 // processing the '--file_cv_info f_name'
 // just for '_all_active_chrs' chrs, saves the cvs info in 'cv_info'
@@ -214,7 +214,7 @@ int Population::ras_read_cv_info(std::string f_name, int iphen)
 // f_name is a space dilimited file with 5 columns: chr pos maf a d
 // each row is a chromosome
 // note to read ras_read_hap_legend_sample_address_name before running this func
-//output: nchrs
+//output: ncv
 int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iphen)
 {
     _pheno_scheme[iphen]._cv_info.resize(_nchr);
@@ -328,7 +328,7 @@ int Population::ras_read_cvs_address_name(std::string f_name, int iphen)
 }
 
 
-// this function loads the cvs which their address is in 'name_cv_hap'
+// this function loads the cvs for all chrs which their address is in 'name_cv_hap'
 // and saves them in 'cvs'
 bool Population::ras_load_cvs(int iphen)
 {
@@ -553,7 +553,8 @@ bool Population::ras_save_human_info(int gen_num)
         file_human << "ph" << j+1 << "_P" << sep;
     }
     file_human << "MV" << sep;
-    file_human << "SV" << std::endl;
+    file_human << "SV" << sep;
+    file_human << "SV_f" << std::endl;
     
     unsigned long int n_human=h.size();
     for (unsigned long int i=0; i<n_human; i++)
@@ -578,19 +579,14 @@ bool Population::ras_save_human_info(int gen_num)
             file_human << h[i].phen[j] << sep;
         }
         file_human << h[i].mating_value << sep;
-        file_human << h[i].selection_value << std::endl;
+        file_human << h[i].selection_value << sep;
+        file_human << h[i].selection_value_func << std::endl;
     }
     file_human.close();
     return true;
 }
 
 
-
-unsigned Population::ras_now_nanoseconds(void)
-{
-    std::chrono::nanoseconds ns = std::chrono::duration_cast< std::chrono::nanoseconds >(std::chrono::system_clock::now().time_since_epoch());
-    return unsigned(ns.count() % 100000000)+std::rand();
-}
 
 
 std::vector<double> Population::get_additive(int iphen)
@@ -698,6 +694,94 @@ std::vector<double> Population::get_selection_value(void)
         x[i]=h[i].selection_value;
     }
     return x;
+}
+
+
+// these function needs corrections, A and phen not bv
+/*
+double Population::compute_couple_var_bv(int sex, int iphen)
+{
+    unsigned long int n_couples=_couples_info.size();
+    if (sex==1)//male
+    {
+        std::vector<double> bv_male;
+        bv_male.reserve(n_couples);
+        for (unsigned long int i=0; i<n_couples; i++)
+        {
+            if(!_couples_info[i].inbreed)
+            {
+                unsigned long int pos_m=_couples_info[i].pos_male;
+                bv_male.push_back(h[pos_m].bv[iphen]);
+            }
+        }
+        return CommFunc::var(bv_male);
+    }
+    else if (sex==2)//female
+    {
+        std::vector<double> bv_female;
+        bv_female.reserve(n_couples);
+        for (unsigned long int i=0; i<n_couples; i++)
+        {
+            if(!_couples_info[i].inbreed)
+            {
+                unsigned long int pos_f=_couples_info[i].pos_female;
+                bv_female.push_back(h[pos_f].bv[iphen]);
+            }
+        }
+        return CommFunc::var(bv_female);
+    }
+    else return 0;
+}
+
+
+double Population::compute_couple_cor_bv(int iphen)
+{
+    unsigned long int n_couples=_couples_info.size();
+    std::vector<double> bv_male(n_couples);
+    std::vector<double> bv_female(n_couples);
+    
+    for (unsigned long int i=0; i<n_couples; i++)
+    {
+        unsigned long int pos_m=_couples_info[i].pos_male;
+        unsigned long int pos_f=_couples_info[i].pos_female;
+        bv_male[i]=h[pos_m].bv[iphen];
+        bv_female[i]=h[pos_f].bv[iphen];
+    }
+    return CommFunc::cor(bv_male,bv_female);
+}
+
+double Population::compute_couple_cor_phen(int iphen)
+{
+    unsigned long int n_couples = _couples_info.size();
+    std::vector<double> bv_male(n_couples);
+    std::vector<double> bv_female(n_couples);
+    
+    for (unsigned long int i=0; i<n_couples; i++)
+    {
+        unsigned long int pos_m=_couples_info[i].pos_male;
+        unsigned long int pos_f=_couples_info[i].pos_female;
+        bv_male[i]=h[pos_m].phen[iphen];
+        bv_female[i]=h[pos_f].phen[iphen];
+    }
+    return CommFunc::cor(bv_male,bv_female);
+}
+
+*/
+
+double Population::compute_couple_cor_mating_value(void)
+{
+    unsigned long int n_couples = _couples_info.size();
+    std::vector<double> b_male(n_couples);
+    std::vector<double> b_female(n_couples);
+    
+    for (unsigned long int i=0; i<n_couples; i++)
+    {
+        unsigned long int pos_m=_couples_info[i].pos_male;
+        unsigned long int pos_f=_couples_info[i].pos_female;
+        b_male[i]=h[pos_m].mating_value;
+        b_female[i]=h[pos_f].mating_value;
+    }
+    return CommFunc::cor(b_male,b_female);
 }
 
 

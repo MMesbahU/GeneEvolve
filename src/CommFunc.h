@@ -16,6 +16,7 @@ namespace CommFunc
 	double Abs(const double &x);
     double sum(const std::vector<double> &x);
     int    sum(const std::vector<int> &x);
+    unsigned long int sum(const std::vector<unsigned long int> &x);
     
     double mean(const std::vector<double> &x);
     double median(const std::vector<double> &x);

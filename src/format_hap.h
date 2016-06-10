@@ -35,6 +35,7 @@ namespace format_hap
     unsigned long int read_legend(Legend &legend, std::string f_name);
     bool read_hap(Hap_SNP &hap_snp, std::string f_name, unsigned long int nhap, unsigned long int nsnp, bool show_iterations);
     bool write_hap(Hap_SNP &hap_snp, std::string file_out_name);
+    bool write_indv(std::vector<unsigned long int> &indv_id, std::string file_out_name);
 };
 
 

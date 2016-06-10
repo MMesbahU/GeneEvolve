@@ -1,11 +1,18 @@
-#include <random>
 #include "Simulation.h"
 #include <exception>
-#include <chrono> // for seconds, milliseconds, nanoseconds, picoseconds
 #include <sstream>      // std::istringstream
 #include "CommFunc.h"
 #include "RasRandomNumber.h"
 #include <unistd.h> // for sysconf
+
+
+
+
+unsigned Simulation::ras_glob_seed(void)
+{
+    std::uniform_int_distribution<unsigned> distribution(1,1000000);
+    return distribution(glob_generator);
+}
 
 
 
@@ -58,6 +65,11 @@ bool Simulation::run(void)
     int time_prev = start_time;
     int time_load;
     
+    
+    unsigned seed=par._seed;
+    glob_generator.seed(seed);
+    
+
     std::cout << " ------------------------------------------------------------------------------" << std::endl;
     std::cout << "                                INITIALIZATION                                 " << std::endl;
     std::cout << " ------------------------------------------------------------------------------" << std::endl;
@@ -201,7 +213,7 @@ bool Simulation::ras_init_parameters(void)
         
         
         ///////////////////////////
-        //ras_read_hap_legend_sample_address_name
+        //Number of chromosomes
         int nl=population[ipop].ras_read_hap_legend_sample_address_name(par.file_hap_name[ipop]);
         int nchr=population[ipop]._hap_legend_sample_name.size();
         population[ipop]._nchr=nchr;
@@ -213,20 +225,49 @@ bool Simulation::ras_init_parameters(void)
         std::cout << "     Number of chromosomes            = " << nchr << std::endl;
         
         
+        ///////////////////////////
+        // check the number of individuals in .invd and .hap file
+        std::vector<unsigned long int> n_ind(nchr,0);
+        for (int ichr=0; ichr<nchr; ichr++)
+        {
+            std::string f_hap = population[ipop]._hap_legend_sample_name[ichr][0];
+            std::string f_indv = population[ipop]._hap_legend_sample_name[ichr][2];
+            unsigned long int hap_ncol = CommFunc::ras_FileColNumber(f_hap, " "); // 2*nind
+            unsigned long int indv_nrow = CommFunc::ras_FileLineNumber(f_indv); // nind
+            if (indv_nrow*2==hap_ncol)
+                n_ind[ichr]=indv_nrow;
+            else
+            {
+                std::cout << "Error: Number of individuals are not equal in files [" << f_hap << "] and [" << f_indv << "]." << std::endl;
+                return false;
+            }
+        }
+        for (int ichr=0; ichr<nchr; ichr++)
+        {
+            if(n_ind[ichr]!=n_ind[0])
+            {
+                std::cout << "Error: Number of individuals are not equal in different chromosomes." << std::endl;
+                return false;
+            }
+        }
+        std::cout << "     Number of individuals            = " << n_ind[0] << std::endl;
+
+        
 
         // phenotypes
         int pop_npheno = par.file_cv_info[ipop].size();
         
         // alloc returns
-        population[ipop].ret_var_phen.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
+        population[ipop].ret_var_P.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
         population[ipop].ret_var_A.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
         population[ipop].ret_var_D.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
-        population[ipop].ret_var_C.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
         population[ipop].ret_var_G.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
+        population[ipop].ret_var_C.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
         population[ipop].ret_var_E.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
+        population[ipop].ret_var_F.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
         population[ipop].ret_h2.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
-        population[ipop].ret_var_parental_effect.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
         population[ipop].ret_var_mating_value.resize(_tot_gen+1,0);
+        population[ipop].ret_var_selection_value.resize(_tot_gen+1,0);
 
         population[ipop]._var_bv_gen0.resize(pop_npheno);
         population[ipop]._var_a_gen0.resize(pop_npheno);
@@ -247,11 +288,11 @@ bool Simulation::ras_init_parameters(void)
             ///////////////////////////
             //ras_read_cvs_address_name
             int ncv_hapfile = population[ipop].ras_read_cvs_address_name(par.file_cvs[ipop][iphen],iphen);
-            std::cout << "       Number of cv hap files         = " << ncv_hapfile << std::endl;
+            std::cout << "       Number of CV hap files         = " << ncv_hapfile << std::endl;
             if (ncv_hapfile==0) return false;
 
             ///////////////////////////
-            //load cv values
+            //loads the CVs for all chrs
             bool ret=population[ipop].ras_load_cvs(iphen); // name of cv hap file is extracted in func ras_read_cvs_address_name
             if(!ret) return false;
             
@@ -262,6 +303,28 @@ bool Simulation::ras_init_parameters(void)
                     std::cout << population[ipop]._pheno_scheme[iphen]._cvs[0].val[0][ideb] << " ";
                 }
                 std::cout << std::endl;
+            }
+            
+            // check CVs
+            for (int ichr=0; ichr<nchr; ichr++)
+            {
+                // check the number of CVs
+                int ncv_inchr_v1 = population[ipop]._pheno_scheme[iphen]._cv_info[ichr].bp.size();
+                int ncv_inchr_v2 = population[ipop]._pheno_scheme[iphen]._cvs[ichr].val[0].size();// num of cvs in hap0
+                if (ncv_inchr_v1 != ncv_inchr_v2)
+                {
+                    std::cout << "Error: Number of CVs in 'cv.hap' and 'cv.info' files are not equal." << std::endl;
+                    return false;
+                }
+                // check the number of inds
+                unsigned long int nhap_inchr_v1 = population[ipop]._pheno_scheme[iphen]._cvs[ichr].val.size(); // nhaps
+                std::string f_hap = population[ipop]._hap_legend_sample_name[ichr][0];
+                unsigned long int nhap_inchr_v2 = CommFunc::ras_FileColNumber(f_hap, " "); // nhaps=2*nind
+                if (nhap_inchr_v1 != nhap_inchr_v2)
+                {
+                    std::cout << "Error: Number of individuals in cv.hap and [" << f_hap << "] files are not equal." << std::endl;
+                    return false;
+                }
             }
         }
 
@@ -282,7 +345,6 @@ bool Simulation::ras_init_parameters(void)
         //check CVs are in genomic map or not
         for (int iphen=0; iphen<pop_npheno; iphen++)
         {
-            int nchr = population[ipop]._pheno_scheme[iphen]._cv_info.size();
             for (int ichr=0; ichr<nchr; ichr++)
             {
                 unsigned long int rmap_st = population[ipop]._rmap[ichr].bp[0];
@@ -349,15 +411,15 @@ bool Simulation::ras_init_generation0(void)
         ras_initial_human_gen0(ipop);
         
         ///////////////////////////////////////////////////////
-        //computing breeding value
-        std::cout << "      computing breeding value" << std::endl;
-        if(!ras_compute_breeding_value(ipop) ) return false;
+        //computing additive and dominance components
+        std::cout << "      computing additive and dominance components" << std::endl;
+        if(!ras_compute_AD(ipop) ) return false;
 
         
         ///////////////////////////
         // in order to use the parental effect, here we should
         // fill _Pop_info_prev_gen with some random numbers
-        // this will be used in ras_create_pheno()
+        // this will be used in ras_scale_AD_compute_GEF()
         ras_fill_Pop_info_prev_gen_for_gen0_prev(ipop);
 
         
@@ -371,10 +433,10 @@ bool Simulation::ras_init_generation0(void)
             population[ipop]._var_bv_gen0[iphen]=var_G_gen0;
             population[ipop]._var_a_gen0[iphen]=var_a_gen0;
             population[ipop]._var_d_gen0[iphen]=var_d_gen0;
-            std::cout << "        var(A) before transformation for phenotype " << iphen+1 << " = " << var_a_gen0 << std::endl;
-            std::cout << "        var(D) before transformation for phenotype " << iphen+1 << " = " << var_d_gen0 << std::endl;
-            std::cout << "        var(G) before transformation for phenotype " << iphen+1 << " = " << var_G_gen0 << std::endl;
-            ras_create_pheno(ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]);
+            std::cout << "        var(A) before scaling for phenotype " << iphen+1 << " = " << var_a_gen0 << std::endl;
+            std::cout << "        var(D) before scaling for phenotype " << iphen+1 << " = " << var_d_gen0 << std::endl;
+            std::cout << "        var(G) before scaling for phenotype " << iphen+1 << " = " << var_G_gen0 << std::endl;
+            ras_scale_AD_compute_GEF(ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]);
         }
     } // for each pop
     
@@ -425,36 +487,37 @@ bool Simulation::ras_init_generation0(void)
         double var_mv = CommFunc::var(population[ipop].get_mating_value());
         double var_sv = CommFunc::var(population[ipop].get_selection_value());
         population[ipop].ret_var_mating_value[gen_num]=var_mv;
+        population[ipop].ret_var_selection_value[gen_num]=var_sv;
         std::cout << "        var(mv)           = " << var_mv << std::endl;
         std::cout << "        var(sv)           = " << var_sv << std::endl;
 
         int nphen=population[ipop]._pheno_scheme.size();
         for (int iphen=0; iphen<nphen; iphen++)
         {
-            double var_phen=CommFunc::var(population[ipop].get_phen(iphen));
+            double var_P=CommFunc::var(population[ipop].get_phen(iphen));
             double var_A = CommFunc::var(population[ipop].get_additive(iphen));
             double var_D = CommFunc::var(population[ipop].get_dominance(iphen));
             double var_C = CommFunc::var(population[ipop].get_common(iphen));
             double var_G=CommFunc::var(population[ipop].get_bv(iphen));
-            double var_e=CommFunc::var(population[ipop].get_e_noise(iphen));
-            double var_parental_effect=CommFunc::var(population[ipop].get_parental_effect(iphen));
-            population[ipop].ret_var_phen[iphen][gen_num]=var_phen;
+            double var_E=CommFunc::var(population[ipop].get_e_noise(iphen));
+            double var_F=CommFunc::var(population[ipop].get_parental_effect(iphen));
+            population[ipop].ret_var_P[iphen][gen_num]=var_P;
             population[ipop].ret_var_A[iphen][gen_num]=var_A;
             population[ipop].ret_var_D[iphen][gen_num]=var_D;
             population[ipop].ret_var_C[iphen][gen_num]=var_C;
             population[ipop].ret_var_G[iphen][gen_num]=var_G;
-            population[ipop].ret_var_E[iphen][gen_num]=var_e;
-            population[ipop].ret_h2[iphen][gen_num]=var_G/var_phen;
-            population[ipop].ret_var_parental_effect[iphen][gen_num]=var_parental_effect;
+            population[ipop].ret_var_E[iphen][gen_num]=var_E;
+            population[ipop].ret_var_F[iphen][gen_num]=var_F;
+            population[ipop].ret_h2[iphen][gen_num]=var_A/var_P;
             std::cout << "        phenotype: " << iphen+1 << std::endl;
             std::cout << "          var(A)          = " << var_A << std::endl;
             std::cout << "          var(D)          = " << var_D << std::endl;
             std::cout << "          var(G)          = " << var_G << std::endl;
             std::cout << "          var(C)          = " << var_C << std::endl;
-            std::cout << "          var(E)          = " << var_e << std::endl;
-            std::cout << "          var(F)          = " << var_parental_effect << std::endl;
-            std::cout << "          var(P)          = " << var_phen << std::endl;
-            std::cout << "          h2              = " << var_G/var_phen << std::endl;
+            std::cout << "          var(E)          = " << var_E << std::endl;
+            std::cout << "          var(F)          = " << var_F << std::endl;
+            std::cout << "          var(P)          = " << var_P << std::endl;
+            std::cout << "          h2              = " << var_A/var_P << std::endl;
         }
     }
 
@@ -476,20 +539,20 @@ bool Simulation::ras_init_generation0(void)
 
 
 //note: std::vector<Human> &h already has phenotype
-// and population[ipop].ret_var_phen and population[ipop].ret_var_G are computed
+// and population[ipop].ret_var_P and population[ipop].ret_var_G are computed
 bool Simulation::ras_main_sim(void)
 {
     std::cout << " Starting the main function ..." << std::endl;
     
-    unsigned seed=ras_now_nanoseconds();
-    std::srand(seed);
+    ///unsigned seed=par._seed;
+    ///std::srand(seed);
 
     for (int gen_num=1; gen_num<=_tot_gen; gen_num++) // for each generation
     {
         std::cout << "    -------------------------------------------------------------------" << std::endl;
         std::cout << "    Start generation " << gen_num << std::endl;
         
-        if(!sim_next_generation(gen_num, rand())) return false;
+        if(!sim_next_generation(gen_num)) return false;
         
         
         std::cout << "    done." << std::endl; // end of one generation
@@ -499,6 +562,8 @@ bool Simulation::ras_main_sim(void)
 
 void Simulation::ras_show_res(void)
 {
+    unsigned n_max_res;
+    unsigned n_print=40;
     for (int ipop=0; ipop<_n_pop; ipop++)
     {
         std::cout << " ---------- " << "Population " << ipop+1 << std::endl;
@@ -506,19 +571,20 @@ void Simulation::ras_show_res(void)
         unsigned nphen=population[ipop]._pheno_scheme.size();
         for (unsigned iphen=0; iphen<nphen; iphen++)
         {
+            n_max_res = population[ipop].ret_var_A[iphen].size() > n_print ? n_print : population[ipop].ret_var_A[iphen].size();
             std::cout << " phenotype: " << iphen+1 << std::endl;
             std::cout << "   ret_var_A:";
-            for (unsigned i=0; i<population[ipop].ret_var_A[iphen].size(); i++)
+            for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << population[ipop].ret_var_A[iphen][i];
             std::cout << std::endl;
             
             std::cout << "   ret_var_D:";
-            for (unsigned i=0; i<population[ipop].ret_var_D[iphen].size(); i++)
+            for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << population[ipop].ret_var_D[iphen][i];
             std::cout << std::endl;
             
             std::cout << "   ret_var_G:";
-            for (unsigned i=0; i<population[ipop].ret_var_G[iphen].size(); i++)
+            for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << population[ipop].ret_var_G[iphen][i];
             std::cout << std::endl;
             
@@ -528,35 +594,44 @@ void Simulation::ras_show_res(void)
             std::cout << std::endl;
             
             std::cout << "   ret_var_E:";
-            for (unsigned i=0; i<population[ipop].ret_var_E[iphen].size(); i++)
+            for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << population[ipop].ret_var_E[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_parental_effect:";
-            for (unsigned i=0; i<population[ipop].ret_var_parental_effect[iphen].size(); i++)
-                std::cout << " " << population[ipop].ret_var_parental_effect[iphen][i];
+            std::cout << "   ret_var_F:";
+            for (unsigned i=0; i<n_max_res; i++)
+                std::cout << " " << population[ipop].ret_var_F[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_phen:";
-            for (unsigned i=0; i<population[ipop].ret_var_phen[iphen].size(); i++)
-                std::cout << " " << population[ipop].ret_var_phen[iphen][i];
+            std::cout << "   ret_var_P:";
+            for (unsigned i=0; i<n_max_res; i++)
+                std::cout << " " << population[ipop].ret_var_P[iphen][i];
             std::cout << std::endl;
             
             std::cout << "   ret_h2:";
-            for (unsigned i=0; i<population[ipop].ret_h2[iphen].size(); i++)
+            for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << population[ipop].ret_h2[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_G/ret_var_G[0]:";
-            for (unsigned i=0; i<population[ipop].ret_var_G[iphen].size(); i++)
-                std::cout << " " << population[ipop].ret_var_G[iphen][i]/population[ipop].ret_var_G[iphen][0];
+            std::cout << "   ret_var_A/ret_var_A[0]:";
+            for (unsigned i=0; i<population[ipop].ret_var_A[iphen].size(); i++)
+                std::cout << " " << population[ipop].ret_var_A[iphen][i]/population[ipop].ret_var_A[iphen][0];
             std::cout << std::endl;
         }
+        
+        n_max_res = population[ipop].ret_var_mating_value.size() > n_print ? n_print : population[ipop].ret_var_mating_value.size();
         // mating_value
         std::cout << " ret_var_mating_value:";
-        for (int i=0; i<(int)population[ipop].ret_var_mating_value.size(); i++)
+        for (unsigned i=0; i<n_max_res; i++)
             std::cout << " " << population[ipop].ret_var_mating_value[i];
         std::cout << std::endl;
+
+        // selection_value
+        std::cout << " ret_var_selection_value:";
+        for (unsigned i=0; i<n_max_res; i++)
+            std::cout << " " << population[ipop].ret_var_selection_value[i];
+        std::cout << std::endl;
+        
     }
 }
 
@@ -581,12 +656,13 @@ void Simulation::ras_save_res(void)
             file_summary << "ph" << iphen+1 << "_var_G" << sep;
             file_summary << "ph" << iphen+1 << "_var_C" << sep;
             file_summary << "ph" << iphen+1 << "_var_E" << sep;
-            file_summary << "ph" << iphen+1 << "_var_parental_effect" << sep;
-            file_summary << "ph" << iphen+1 << "_var_phen" << sep;
+            file_summary << "ph" << iphen+1 << "_var_F" << sep;
+            file_summary << "ph" << iphen+1 << "_var_P" << sep;
             file_summary << "ph" << iphen+1 << "_h2" << sep;
             file_summary << "ph" << iphen+1 << "_var_G_std" << sep;
         }
-        file_summary << "var_mating_value" << std::endl;
+        file_summary << "var_mating_value" << sep;
+        file_summary << "var_selection_value" << std::endl;
 
         
         // phenotypes
@@ -600,13 +676,14 @@ void Simulation::ras_save_res(void)
                 file_summary << population[ipop].ret_var_G[iphen][igen] << sep;
                 file_summary << population[ipop].ret_var_C[iphen][igen] << sep;
                 file_summary << population[ipop].ret_var_E[iphen][igen] << sep;
-                file_summary << population[ipop].ret_var_parental_effect[iphen][igen] << sep;
-                file_summary << population[ipop].ret_var_phen[iphen][igen] << sep;
+                file_summary << population[ipop].ret_var_F[iphen][igen] << sep;
+                file_summary << population[ipop].ret_var_P[iphen][igen] << sep;
                 file_summary << population[ipop].ret_h2[iphen][igen] << sep;
                 file_summary << population[ipop].ret_var_G[iphen][igen]/population[ipop].ret_var_G[iphen][0] << sep;
             }
             // mating_value
-            file_summary << population[ipop].ret_var_mating_value[igen] << std::endl;
+            file_summary << population[ipop].ret_var_mating_value[igen] << sep;
+            file_summary << population[ipop].ret_var_selection_value[igen] << std::endl;
         }
         
         file_summary.close();
@@ -679,34 +756,34 @@ bool Simulation::ras_do_migration(int gen_ind)
     // alloc an empty _n_pop*_n_pop Camp
     std::vector<std::vector<Camp> > camp(_n_pop , std::vector<Camp>(_n_pop));
     
-    std::vector<std::vector<int> > num_move(_n_pop, std::vector<int>(_n_pop,0));
+    std::vector<std::vector<unsigned long int> > num_move(_n_pop, std::vector<unsigned long int>(_n_pop,0));
     // number of migrant inds
     for (int i=0; i<_n_pop; i++)
     {
         for (int j=0; j<_n_pop; j++)
         {
             if (i==j) continue;
-            int n_migrant=round(migration_mat[i][j]*(double)population[i].h.size());
+            unsigned long int n_migrant=round(migration_mat[i][j]*(double)population[i].h.size());
             std::cout << "        migration from population " << i+1 << " to " << j+1 << " = " << n_migrant << std::endl;
             num_move[i][j]=n_migrant;
         }
     }
     
-    // in order to moev unique inds from i to other pops, we first sample at size equal to the all migrants
-    std::vector<std::vector<int> > move_sample_pop(_n_pop);
+    // in order to move unique inds from i to other pops, we first sample at size equal to the all migrants
+    std::vector<std::vector<unsigned long int> > move_sample_pop(_n_pop);
     for (int i=0; i<_n_pop; i++)
     {
         //std::vector<double> temp(num_move[i].begin(), num_move[i].end());
-        int s=CommFunc::sum(num_move[i]);
-        std::vector<int> sample = RasRandomNumber::ras_SampleWithoutReplacement((int)population[i].h.size(), s);
-        std::sort(sample.begin(),sample.end(),std::greater<int>()); // sort descending
+        unsigned long int s=CommFunc::sum(num_move[i]);
+        std::vector<unsigned long int> sample = RasRandomNumber::ras_SampleWithoutReplacement((unsigned long int)population[i].h.size(), s, ras_glob_seed());
+        std::sort(sample.begin(),sample.end(),std::greater<unsigned long int>()); // sort descending
         move_sample_pop[i]=sample;
-        int k=0;
+        unsigned long int k=0;
         for (int j=0; j<_n_pop; j++)
         {
             if (i==j) continue;
             camp[i][j].humans.resize(num_move[i][j]);
-            int it=0;
+            unsigned long int it=0;
             while (k<num_move[i][j])
             {
                 camp[i][j].humans[it]=population[i].h[sample[k]];
@@ -741,7 +818,7 @@ bool Simulation::ras_do_migration(int gen_ind)
     {
         for (unsigned k=0; k<move_sample_pop[i].size(); k++)
         {
-            int ind=move_sample_pop[i][k];
+            unsigned long int ind=move_sample_pop[i][k];
             population[i].h.erase(population[i].h.begin()+ind);
         }
         //std::cout << "        size pop "  << i+1 << " after remove          = " << population[i].h.size() << std::endl;
@@ -766,14 +843,6 @@ bool Simulation::ras_do_migration(int gen_ind)
     }
     
     return true;
-}
-
-
-// this file is for generarting random seed
-unsigned Simulation::ras_now_nanoseconds(void)
-{
-    std::chrono::nanoseconds ns = std::chrono::duration_cast< std::chrono::nanoseconds >(std::chrono::system_clock::now().time_since_epoch());
-    return unsigned(ns.count() % 100000000)+std::rand();
 }
 
 
@@ -894,11 +963,16 @@ bool Simulation::ras_write_hap_legend_sample(int gen_num)
             Hap_SNP hap_snp;
             ras_convert_interval_to_hap_matrix(ipop, pops_hap, pops_legend, ichr, hap_snp);
             
-            
-            // writing the hap
+            // writing to the hap file
             std::cout << "      writing" << std::endl << std::flush;
-            std::string outfile_name=_out_prefix +".pop"+std::to_string(ipop+1) + ".gen" + std::to_string(gen_num)+".chr" + std::to_string(_all_active_chrs[ichr]);
+            std::string outfile_name = _out_prefix + ".pop"+std::to_string(ipop+1) + ".gen" + std::to_string(gen_num) + ".chr" + std::to_string(_all_active_chrs[ichr]);
             format_hap::write_hap(hap_snp, outfile_name);
+            
+            // writing to indv file
+            std::vector<unsigned long int> indv_id;
+            ras_convert_pop_to_indv(ipop, indv_id);
+            format_hap::write_indv(indv_id, outfile_name);
+
         }
         std::cout << "    --------------------------------------------------------------" << std::endl;
 
@@ -960,7 +1034,17 @@ bool Simulation::ras_convert_interval_to_hap_matrix(int ipop, std::vector<Hap_SN
 }
 
 
-
+// return: indv_id
+bool Simulation::ras_convert_pop_to_indv(int ipop, std::vector<unsigned long int> &indv_id)
+{
+    unsigned long int n_human=population[ipop].h.size();
+    indv_id.resize(n_human);
+    for (unsigned long int ih=0; ih<n_human; ih++) // for humans
+    {
+        indv_id[ih]=population[ipop].h[ih].ID+1;
+    }
+    return true;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1183,7 +1267,7 @@ bool Simulation::ras_write_hap_to_interval_format(int gen_num)
 
 
 // main body for each generation
-bool Simulation::sim_next_generation(int gen_num, unsigned seed)
+bool Simulation::sim_next_generation(int gen_num)
 {
     
     int time_start_this_generation = time(0);
@@ -1203,7 +1287,7 @@ bool Simulation::sim_next_generation(int gen_num, unsigned seed)
         if (population[ipop]._RM)
         {
             std::cout << "      random mating" << std::endl;
-            if(!random_mate(ipop, gen_num-1, seed)) // gen_num-1, because it starts from 1
+            if(!random_mate(ipop, gen_num-1)) // gen_num-1, because it starts from 1
                 return false;
         }
         else
@@ -1214,49 +1298,49 @@ bool Simulation::sim_next_generation(int gen_num, unsigned seed)
         }
         
         // give some info
-        double couple_cor_mv=compute_couple_cor_mating_value(ipop);
+        double couple_cor_mv=population[ipop].compute_couple_cor_mating_value();
         std::cout << "        couples_info.size = " << population[ipop]._couples_info.size() << std::endl;
         std::cout << "        couple_cor_mv     = " << couple_cor_mv << std::endl;
         std::cout << std::flush;
         
         ///////////////////////////////////////////////////////
-        //A8 Reproduce: create new humans
+        //Reproduce: create new humans
         std::cout << "      reproducing" << std::endl;
         population[ipop].h=reproduce(ipop, gen_num);
         std::cout << "        human size        = " << population[ipop].h.size() << std::endl;
         
         ///////////////////////////////////////////////////////
-        //computing breeding value
-        std::cout << "      computing breeding value" << std::endl;
-        if(!ras_compute_breeding_value(ipop) ) return false;
+        //computing additive and dominance
+        std::cout << "      computing additive and dominance components" << std::endl;
+        if(!ras_compute_AD(ipop) ) return false;
 
         
         ///////////////////////////////////////////////////////
-        //A6 Create Phenotypes (e_noise, parental_effect, phen)
+        //Create Phenotypes (e_noise, parental_effect, phen)
         std::cout << "      creating phenotypes" << std::endl;
         // create pheno for each iphen
         //unsigned long int n=population[ipop].h.size();
         for (int iphen=0; iphen<nphen; iphen++)
         {
-            if(!ras_create_pheno(ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]))
+            if(!ras_scale_AD_compute_GEF(ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]))
                 return false;
             // give some info
-            double var_phen=CommFunc::var(population[ipop].get_phen(iphen));
+            double var_P=CommFunc::var(population[ipop].get_phen(iphen));
             double var_A = CommFunc::var(population[ipop].get_additive(iphen));
             double var_D = CommFunc::var(population[ipop].get_dominance(iphen));
-            double var_C = CommFunc::var(population[ipop].get_common(iphen));
             double var_G=CommFunc::var(population[ipop].get_bv(iphen));
-            double var_e=CommFunc::var(population[ipop].get_e_noise(iphen));
-            double var_parental_effect=CommFunc::var(population[ipop].get_parental_effect(iphen));
+            double var_C = CommFunc::var(population[ipop].get_common(iphen));
+            double var_E=CommFunc::var(population[ipop].get_e_noise(iphen));
+            double var_F=CommFunc::var(population[ipop].get_parental_effect(iphen));
             std::cout << "        phenotype: " << iphen+1 << std::endl;
             std::cout << "          var(A)          = " << var_A << std::endl;
             std::cout << "          var(D)          = " << var_D << std::endl;
             std::cout << "          var(G)          = " << var_G << std::endl;
             std::cout << "          var(C)          = " << var_C << std::endl;
-            std::cout << "          var(E)          = " << var_e << std::endl;
-            std::cout << "          var(F)          = " << var_parental_effect << std::endl;
-            std::cout << "          var(P)          = " << var_phen << std::endl;
-            std::cout << "          h2              = " << var_G/var_phen << std::endl;
+            std::cout << "          var(E)          = " << var_E << std::endl;
+            std::cout << "          var(F)          = " << var_F << std::endl;
+            std::cout << "          var(P)          = " << var_P << std::endl;
+            std::cout << "          h2              = " << var_A/var_P << std::endl;
         }
         
     } // for each population
@@ -1314,38 +1398,40 @@ bool Simulation::sim_next_generation(int gen_num, unsigned seed)
         population[ipop].ras_save_human_info(gen_num);
         
         // give some info
-        double var_mv = CommFunc::var(population[ipop].get_mating_value());
-        population[ipop].ret_var_mating_value[gen_num]=var_mv;
-        std::cout << "        var(mv)           = " << var_mv << std::endl;
-        std::cout << "        var(sv)           = " << CommFunc::var(population[ipop].get_selection_value()) << std::endl;
-        
         for (int iphen=0; iphen<nphen; iphen++)
         {
-            double var_phen = CommFunc::var(population[ipop].get_phen(iphen));
+            double var_P = CommFunc::var(population[ipop].get_phen(iphen));
             double var_A = CommFunc::var(population[ipop].get_additive(iphen));
             double var_D = CommFunc::var(population[ipop].get_dominance(iphen));
             double var_C = CommFunc::var(population[ipop].get_common(iphen));
             double var_G = CommFunc::var(population[ipop].get_bv(iphen));
-            double var_e = CommFunc::var(population[ipop].get_e_noise(iphen));
-            double var_parental_effect = CommFunc::var(population[ipop].get_parental_effect(iphen));
-            population[ipop].ret_var_phen[iphen][gen_num]=var_phen;
+            double var_E = CommFunc::var(population[ipop].get_e_noise(iphen));
+            double var_F = CommFunc::var(population[ipop].get_parental_effect(iphen));
+            population[ipop].ret_var_P[iphen][gen_num]=var_P;
             population[ipop].ret_var_A[iphen][gen_num]=var_A;
             population[ipop].ret_var_D[iphen][gen_num]=var_D;
             population[ipop].ret_var_C[iphen][gen_num]=var_C;
             population[ipop].ret_var_G[iphen][gen_num]=var_G;
-            population[ipop].ret_var_E[iphen][gen_num]=var_e;
-            population[ipop].ret_h2[iphen][gen_num]=var_G/var_phen;
-            population[ipop].ret_var_parental_effect[iphen][gen_num]=var_parental_effect;
+            population[ipop].ret_var_E[iphen][gen_num]=var_E;
+            population[ipop].ret_h2[iphen][gen_num]=var_A/var_P;
+            population[ipop].ret_var_F[iphen][gen_num]=var_F;
             std::cout << "        phenotype: " << iphen+1 << std::endl;
             std::cout << "          var(A)          = " << var_A << std::endl;
             std::cout << "          var(D)          = " << var_D << std::endl;
             std::cout << "          var(G)          = " << var_G << std::endl;
             std::cout << "          var(C)          = " << var_C << std::endl;
-            std::cout << "          var(E)          = " << var_e << std::endl;
-            std::cout << "          var(F)          = " << var_parental_effect << std::endl;
-            std::cout << "          var(P)          = " << var_phen << std::endl;
-            std::cout << "          h2              = " << var_G/var_phen << std::endl;
+            std::cout << "          var(E)          = " << var_E << std::endl;
+            std::cout << "          var(F)          = " << var_F << std::endl;
+            std::cout << "          var(P)          = " << var_P << std::endl;
+            std::cout << "          h2              = " << var_A/var_P << std::endl;
         }
+        double var_mv = CommFunc::var(population[ipop].get_mating_value());
+        double var_sv = CommFunc::var(population[ipop].get_selection_value());
+        
+        population[ipop].ret_var_mating_value[gen_num]=var_mv;
+        population[ipop].ret_var_selection_value[gen_num]=var_sv;
+        std::cout << "        var(mv)           = " << var_mv << std::endl;
+        std::cout << "        var(sv)           = " << var_sv << std::endl;
     }
     
     ///////////////////////////////////////////////////////
@@ -1380,12 +1466,20 @@ bool Simulation::sim_next_generation(int gen_num, unsigned seed)
 // _avoid_inbreeding has no meaning here
 // _mat_cor has no meaning here
 
-bool Simulation::random_mate(int ipop, int gen_ind, unsigned seed)
+bool Simulation::random_mate(int ipop, int gen_ind)
 {
+    unsigned seed = ras_glob_seed();
     std::default_random_engine generator(seed);
     std::uniform_real_distribution<double> distribution(0.0,1.0);
     
     unsigned long int n_h =(int)population[ipop].h.size();
+    
+    if (_debug)
+    {
+        std::cout << "Simulation::random_mate; seed=" << seed << std::endl;
+        std::cout << "Simulation::random_mate; n_h=" << n_h << std::endl;
+        std::cout << "random num=" << distribution(generator) << ", " << distribution(generator) << std::endl;
+    }
     
     // MARRIAGEABLE PEOPLE - this section creates an equal number of males and females who will be paired off below
     
@@ -1396,7 +1490,7 @@ bool Simulation::random_mate(int ipop, int gen_ind, unsigned seed)
     {
         // check selection_value
         double r=distribution(generator);
-        if (r < population[ipop].h[i].selection_value)
+        if (r < population[ipop].h[i].selection_value_func)
         {
             if (population[ipop].h[i].sex==1) pos_male.push_back(i); // this male can mary
             else if (population[ipop].h[i].sex==2) pos_female.push_back(i); //this female can mary
@@ -1449,15 +1543,24 @@ bool Simulation::random_mate(int ipop, int gen_ind, unsigned seed)
 
 // mate based on the phenotype
 // it is possible taht an individual has 2 spouses, based on _MM_percent
+// gen_ind is gen_num-1
 bool Simulation::assort_mate(int ipop, int gen_ind)
 {
-    //std::srand(unsigned(std::time(0)));
-    unsigned seed=ras_now_nanoseconds();
+    ///unsigned seed=ras_now_nanoseconds();
+    unsigned seed = ras_glob_seed();
+
     std::srand(seed);
-    std::default_random_engine generator(seed);
+    std::default_random_engine generator(seed+1);
     std::uniform_real_distribution<double> distribution(0.0,1.0);
 
     unsigned long int n_h =(int)population[ipop].h.size();
+    if (_debug)
+    {
+        std::cout << "Simulation::random_mate; seed=" << seed << std::endl;
+        std::cout << "Simulation::random_mate; n_h=" << n_h << std::endl;
+        std::cout << "random num=" << distribution(generator) << ", " << distribution(generator) << std::endl;
+    }
+
     
     // MARRIAGEABLE PEOPLE - this section creates an equal number of males and females who will be paired off below
     std::vector<Ind_MatingValue> pos_male_marriageable;
@@ -1466,7 +1569,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     {
         //double r=(double)std::rand()/RAND_MAX;
         double r=distribution(generator);
-        if (r < population[ipop].h[i].selection_value)
+        if (r < population[ipop].h[i].selection_value_func)
         {
             if (population[ipop].h[i].sex==1) //this male can marry
             {
@@ -1524,7 +1627,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     corr[1][1]=1;
     
     unsigned long int n_couples2=std::min(pos_male_marriageable.size(), pos_female_marriageable.size());
-    std::vector<std::vector<double> > template_AM_dist = RasRandomNumber::ras_mvnorm(n_couples2,mu,corr);
+    std::vector<std::vector<double> > template_AM_dist = RasRandomNumber::ras_mvnorm(n_couples2, mu, corr, ras_glob_seed());
     
     std::vector<double> t1(template_AM_dist.size());
     for (int i=0; i<(int)template_AM_dist.size(); i++) t1[i]=template_AM_dist[i][0];
@@ -1587,7 +1690,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     if (population[ipop]._offspring_dist[gen_ind]=="p" || population[ipop]._offspring_dist[gen_ind]=="P") //Poisson
     {
         double lam=(double)population[ipop]._pop_size[gen_ind]/(n_couples2-n_inbreed);
-        std::vector<int> num_offspring = RasRandomNumber::ras_rpois(n_couples2,lam);
+        std::vector<int> num_offspring = RasRandomNumber::ras_rpois(n_couples2,lam, ras_glob_seed());
         for (unsigned long int i=0; i<n_couples2; i++)
         {
             couples_info[i].num_offspring=num_offspring[i]; // we want just one Poisson rv
@@ -1642,7 +1745,9 @@ bool Simulation::ras_allocate_memory_for_humans(std::vector<Human> &h, unsigned 
 std::vector<Human> Simulation::reproduce(int ipop, int gen_num)
 {
     //std::srand(unsigned(std::time(0)));
-    unsigned seed=ras_now_nanoseconds();
+    ///unsigned seed=ras_now_nanoseconds();
+    unsigned seed = ras_glob_seed();
+
     std::srand(seed);
     
     unsigned long int n_couples=population[ipop]._couples_info.size();
@@ -1660,7 +1765,7 @@ std::vector<Human> Simulation::reproduce(int ipop, int gen_num)
     
     
     // create random normal for common effect
-    std::default_random_engine generator(seed);
+    std::default_random_engine generator(seed+1);
     std::vector<std::vector <double> > val_common(nphen,std::vector <double>(n_couples,0)); // default is zero
     for (int iphen=0; iphen<nphen; iphen++) // for pheno
     {
@@ -1741,11 +1846,12 @@ std::vector<Human> Simulation::reproduce(int ipop, int gen_num)
 // generate some mutation sites and add them to hap[0] or hap[1]
 bool Simulation::ras_add_mutation(int ipop, int ichr, std::vector<part> &hap_rec_pat, std::vector<part> &hap_rec_mat)
 {
-    unsigned seed=ras_now_nanoseconds();
+    ///unsigned seed=ras_now_nanoseconds();
+    unsigned seed = ras_glob_seed();
     std::srand(unsigned(seed));
     
-    std::default_random_engine generator(seed);
-    std::default_random_engine generator_u(seed);
+    std::default_random_engine generator(seed+1);
+    std::default_random_engine generator_u(seed+2);
     std::uniform_real_distribution<double> distribution(0.0,1.0);
 
     
@@ -1865,7 +1971,7 @@ double Simulation::ras_compute_bv_part(std::vector<part> &p, int ichr, int iphen
 }
 
 
-bool Simulation::ras_compute_breeding_value(int ipop)
+bool Simulation::ras_compute_AD(int ipop)
 {
     unsigned nchr = population[ipop].h[0].chr.size();
     unsigned nphen = population[ipop]._pheno_scheme.size();
@@ -1907,38 +2013,39 @@ bool Simulation::ras_compute_breeding_value(int ipop)
             for(unsigned long int ih=0; ih<n_human; ih++) // for humans
             {
                 //if (_debug) std::cout << "h" << ih << std::endl;
-                double A=0;
-                double D=0;
+                double A_chr=0;
+                double D_chr=0;
                 for (unsigned icv=0; icv<ncv; icv++) // for all CVs
                 {
                     //if (_debug) std::cout << "icv" << icv << std::endl;
                     // avarage, since they may be from different populations
                     double a = (h_cv[ih].chromatid[0].genetic_value_a[icv]+h_cv[ih].chromatid[1].genetic_value_a[icv])/2;
                     double d = (h_cv[ih].chromatid[0].genetic_value_d[icv]+h_cv[ih].chromatid[1].genetic_value_d[icv])/2;
+                    // if no dominance
                     if (population[ipop]._pheno_scheme[iphen]._vd==0)
                         d=0;
-                    int t = h_cv[ih].chromatid[0].cv[icv] + h_cv[ih].chromatid[1].cv[icv]; // 0,1,2
+                    double t = (double)h_cv[ih].chromatid[0].cv[icv] + (double)h_cv[ih].chromatid[1].cv[icv]; // 0,1,2
                     double p=frq[icv];
                     double q=1-p;
                     // Additive
                     double alpha = a+d*(q-p);
-                    A += ((double)t-2*p)*alpha/std::sqrt(2*p*q);
+                    A_chr += (t-2*p)/std::sqrt(2*p*q)*alpha;
                     // Dominance
                     std::vector<double> c_t(3);
                     c_t[0] = -2*p*p;
                     c_t[1] =  2*p*q;
                     c_t[2] = -2*q*q;
-                    D += c_t[t]*d/(2*p*q);
+                    D_chr += c_t[t]/(2*p*q)*d;
                 }
                 //population[ipop].h[ih].chr[ichr].additive_chr[iphen]=G_hat;
                 //population[ipop].h[ih].chr[ichr].dominance_chr[iphen]=G-G_hat;
                 //population[ipop].h[ih].chr[ichr].bv_chr[iphen]=G;
-                population[ipop].h[ih].chr[ichr].additive_chr[iphen]=A;
-                population[ipop].h[ih].chr[ichr].dominance_chr[iphen]=D;
-                population[ipop].h[ih].chr[ichr].bv_chr[iphen]=A+D;
-                if (isnan(A))
+                population[ipop].h[ih].chr[ichr].additive_chr[iphen]=A_chr;
+                population[ipop].h[ih].chr[ichr].dominance_chr[iphen]=D_chr;
+                population[ipop].h[ih].chr[ichr].bv_chr[iphen]=A_chr+D_chr;
+                if (isnan(A_chr) || isnan(D_chr))
                 {
-                    std::cout << "Error: A is nan for human " << ih << ", and chr index " << ichr << std::endl;
+                    std::cout << "Error: A or D is nan for human " << ih << ", and chr index " << ichr << std::endl;
                     return false;
                 }
             }
@@ -1976,7 +2083,7 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
 {
     Human_CV h_cv(ncv);
     
-    // for pat
+    // for paternal
     for (unsigned j=0; j<h.chr[ichr].Hap[0].size(); j++) // for parts
     {
         int root_population=h.chr[ichr].Hap[0][j].root_population;
@@ -1987,13 +2094,16 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
             if (h.chr[ichr].Hap[0][j].check_interval(bp)) // if there is a cv in this part, extraxt its value from its root_population and hap_index
             {
                 bool cv_val = population[root_population]._pheno_scheme[iphen]._cvs[ichr].val[hap_index][icv];
-                // if cv is mutated
+                
+                // mutation
+                // if cv is mutated, change its value
                 std::vector<unsigned long int>::iterator it = find(h.chr[ichr].Hap[0][j].mutation_pos.begin(), h.chr[ichr].Hap[0][j].mutation_pos.end(), bp);
                 if (it != h.chr[ichr].Hap[0][j].mutation_pos.end())
                 {
                     cv_val = !cv_val;
                     if (_debug) std::cout << "mutation in cv" << std::endl;
                 }
+                
                 h_cv.chromatid[0].cv[icv] = cv_val;
                 h_cv.chromatid[0].genetic_value_a[icv] = population[root_population]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a[icv];
                 h_cv.chromatid[0].genetic_value_d[icv] = population[root_population]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_d[icv];
@@ -2002,7 +2112,7 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
         }//for cv
     }// for parts
     
-    // for mat
+    // for maternal
     for (unsigned j=0; j<h.chr[ichr].Hap[1].size(); j++) // for parts
     {
         int root_population=h.chr[ichr].Hap[1][j].root_population;
@@ -2013,13 +2123,16 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
             if (h.chr[ichr].Hap[1][j].check_interval(bp)) // if there is a cv in this part, extrcat its root_population and hap_index
             {
                 bool cv_val = population[root_population]._pheno_scheme[iphen]._cvs[ichr].val[hap_index][icv];
-                // if cv is mutated
+
+                // mutation
+                // if cv is mutated, change its value
                 std::vector<unsigned long int>::iterator it = find(h.chr[ichr].Hap[1][j].mutation_pos.begin(), h.chr[ichr].Hap[1][j].mutation_pos.end(), bp);
                 if (it != h.chr[ichr].Hap[1][j].mutation_pos.end())
                 {
                     cv_val = !cv_val;
                     if (_debug) std::cout << "mutation in cv" << std::endl;
                 }
+                
                 h_cv.chromatid[1].cv[icv] = cv_val;
                 h_cv.chromatid[1].genetic_value_a[icv] = population[root_population]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a[icv];
                 h_cv.chromatid[1].genetic_value_d[icv] = population[root_population]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_d[icv];
@@ -2192,7 +2305,7 @@ std::vector<unsigned long int> Simulation::ras_sim_loc_rec(std::vector<double> &
     //if(seed==0) seed=unsigned(std::time(0));
     //unsigned seed=ras_now_nanoseconds();
     std::srand(seed);
-    std::default_random_engine generator(seed);
+    std::default_random_engine generator(seed+1);
     std::uniform_real_distribution<double> distribution(0.0,1.0);
 
     std::vector<unsigned long int> rec_bp_loc_mat;
@@ -2212,96 +2325,13 @@ std::vector<unsigned long int> Simulation::ras_sim_loc_rec(std::vector<double> &
 }
 
 
-double Simulation::compute_couple_var_bv(int ipop, int sex, int iphen)
-{
-    unsigned long int n_couples=population[ipop]._couples_info.size();
-    if (sex==1)//male
-    {
-        std::vector<double> bv_male;
-        bv_male.reserve(n_couples);
-        for (unsigned long int i=0; i<n_couples; i++)
-        {
-            if(!population[ipop]._couples_info[i].inbreed)
-            {
-                unsigned long int pos_m=population[ipop]._couples_info[i].pos_male;
-                bv_male.push_back(population[ipop].h[pos_m].bv[iphen]);
-            }
-        }
-        return CommFunc::var(bv_male);
-    }
-    else if (sex==2)//female
-    {
-        std::vector<double> bv_female;
-        bv_female.reserve(n_couples);
-        for (unsigned long int i=0; i<n_couples; i++)
-        {
-            if(!population[ipop]._couples_info[i].inbreed)
-            {
-                unsigned long int pos_f=population[ipop]._couples_info[i].pos_female;
-                bv_female.push_back(population[ipop].h[pos_f].bv[iphen]);
-            }
-        }
-        return CommFunc::var(bv_female);
-    }
-    else return 0;
-}
 
-
-double Simulation::compute_couple_cor_bv(int ipop, int iphen)
-{
-    unsigned long int n_couples=population[ipop]._couples_info.size();
-    std::vector<double> bv_male(n_couples);
-    std::vector<double> bv_female(n_couples);
-    
-    for (unsigned long int i=0; i<n_couples; i++)
-    {
-        unsigned long int pos_m=population[ipop]._couples_info[i].pos_male;
-        unsigned long int pos_f=population[ipop]._couples_info[i].pos_female;
-        bv_male[i]=population[ipop].h[pos_m].bv[iphen];
-        bv_female[i]=population[ipop].h[pos_f].bv[iphen];
-    }
-    return CommFunc::cor(bv_male,bv_female);
-}
-
-double Simulation::compute_couple_cor_phen(int ipop, int iphen)
-{
-    unsigned long int n_couples = population[ipop]._couples_info.size();
-    std::vector<double> bv_male(n_couples);
-    std::vector<double> bv_female(n_couples);
-    
-    for (unsigned long int i=0; i<n_couples; i++)
-    {
-        unsigned long int pos_m=population[ipop]._couples_info[i].pos_male;
-        unsigned long int pos_f=population[ipop]._couples_info[i].pos_female;
-        bv_male[i]=population[ipop].h[pos_m].phen[iphen];
-        bv_female[i]=population[ipop].h[pos_f].phen[iphen];
-    }
-    return CommFunc::cor(bv_male,bv_female);
-}
-
-
-double Simulation::compute_couple_cor_mating_value(int ipop)
-{
-    unsigned long int n_couples = population[ipop]._couples_info.size();
-    std::vector<double> b_male(n_couples);
-    std::vector<double> b_female(n_couples);
-    
-    for (unsigned long int i=0; i<n_couples; i++)
-    {
-        unsigned long int pos_m=population[ipop]._couples_info[i].pos_male;
-        unsigned long int pos_f=population[ipop]._couples_info[i].pos_female;
-        b_male[i]=population[ipop].h[pos_m].mating_value;
-        b_female[i]=population[ipop].h[pos_f].mating_value;
-    }
-    return CommFunc::cor(b_male,b_female);
-}
-
-
-
-// this func finally creates bv
+// this func creates parts for each ind
 bool Simulation::ras_initial_human_gen0(int ipop)
 {
-    unsigned seed=ras_now_nanoseconds();
+    //unsigned seed=ras_now_nanoseconds();
+    unsigned seed = ras_glob_seed();
+
     std::srand(seed);
  
     std::cout << "     Initializing humans at generation zero for population " << ipop+1 << std::endl;
@@ -2346,12 +2376,15 @@ bool Simulation::ras_initial_human_gen0(int ipop)
     return true;
 }
 
-bool Simulation::ras_create_pheno(int ipop, int iphen, double s2_a_gen0, double s2_d_gen0)
+
+bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0, double s2_d_gen0)
 {
-    unsigned seed=ras_now_nanoseconds();
+    ///unsigned seed=ras_now_nanoseconds();
+    unsigned seed = ras_glob_seed();
+
     std::default_random_engine generator(seed);
     
-    std::normal_distribution<double> distribution(0.0, 1);
+    std::normal_distribution<double> distribution(0.0, 1);//normal dist
     
     double beta=population[ipop]._pheno_scheme[iphen]._beta;
 
@@ -2364,13 +2397,14 @@ bool Simulation::ras_create_pheno(int ipop, int iphen, double s2_a_gen0, double 
     std::vector<double> par_eff(n_human);
     for (unsigned long int i=0; i<n_human; i++)
     {
-        // e_noise
+        // create e_noise
         e[i] = distribution(generator); // create noise with N(0,1)
 
         a[i]=population[ipop].h[i].additive[iphen];
         d[i]=population[ipop].h[i].dominance[iphen];
-        //bv[i]=population[ipop].h[i].bv[iphen];
-        // parental_effect: transmission_of_environmental_effects_from_parents_to_offspring
+
+        // create parental_effect
+        // transmission_of_environmental_effects_from_parents_to_offspring
         unsigned long int ind_f = population[ipop].h[i].ID_Father;
         unsigned long int ind_m = population[ipop].h[i].ID_Mother;
         double f_father = _Pop_info_prev_gen[ipop].phen[iphen][ind_f];
@@ -2378,7 +2412,7 @@ bool Simulation::ras_create_pheno(int ipop, int iphen, double s2_a_gen0, double 
         par_eff[i] = beta*(f_father+f_mother)/std::sqrt(2);
     }
     
-    // additive
+    // sd additive
     double s_a=1;
     if (population[ipop]._pheno_scheme[iphen]._va>0)
         s_a=std::sqrt(s2_a_gen0 / population[ipop]._pheno_scheme[iphen]._va);
@@ -2386,7 +2420,7 @@ bool Simulation::ras_create_pheno(int ipop, int iphen, double s2_a_gen0, double 
         s_a=1;
     
     
-    //dominance
+    //sd dominance
     double s_d=0;
     if (population[ipop]._pheno_scheme[iphen]._vd>0)
         s_d=std::sqrt(s2_d_gen0 / population[ipop]._pheno_scheme[iphen]._vd);
@@ -2395,46 +2429,55 @@ bool Simulation::ras_create_pheno(int ipop, int iphen, double s2_a_gen0, double 
     
     //double s_bv=std::sqrt(s2_gen0 / population[ipop]._pheno_scheme[iphen]._va);
     //double m_bv=CommFunc::mean(bv);
+    
+    // sd parental effect
     double s_par_eff=0;
     if (population[ipop]._pheno_scheme[iphen]._vf>0)
         s_par_eff=std::sqrt(CommFunc::var(par_eff) / population[ipop]._pheno_scheme[iphen]._vf);
     
     // almost no need
+    // sd E
     double s_ev=0;
     if (population[ipop]._pheno_scheme[iphen]._ve>0)
         s_ev=std::sqrt(CommFunc::var(e) / population[ipop]._pheno_scheme[iphen]._ve);
 
     
-    //Create phenotypes
+    // scaling A D E F
     // bv shold be standardized
     for (unsigned long int i=0; i<n_human; i++)
     {
-        // e_noise
+        // scaling E
         if (s_ev>0)
             population[ipop].h[i].e_noise[iphen] = e[i]/s_ev;
         else
             population[ipop].h[i].e_noise[iphen] = 0; // if s_ev==0, then e_noise=0
-        // additive
+        
+        // scaling A
         population[ipop].h[i].additive[iphen] = a[i]/s_a; // scale to gen0
-        // dominance
+        
+        // scaling D
         if (s_d>0)
             population[ipop].h[i].dominance[iphen] = d[i]/s_d; // scale to gen0
         else
             population[ipop].h[i].dominance[iphen] = 0;
-        // bv
+        // G
         population[ipop].h[i].bv[iphen] = population[ipop].h[i].additive[iphen]+population[ipop].h[i].dominance[iphen];
-        // parental_effect
+        // scaling F
         if (s_par_eff>0)
             population[ipop].h[i].parental_effect[iphen] = par_eff[i]; // /s_par_eff; // for gen0 _Pop_info_prev_gen[ipop] is 0
         else
             population[ipop].h[i].parental_effect[iphen] = 0;
-        // phen
-        population[ipop].h[i].phen[iphen]= population[ipop].h[i].bv[iphen] + population[ipop].h[i].common_sibling[iphen] + population[ipop].h[i].e_noise[iphen] + population[ipop].h[i].parental_effect[iphen];
+        
+        // P
+        population[ipop].h[i].phen[iphen]= population[ipop].h[i].additive[iphen] + population[ipop].h[i].dominance[iphen] + population[ipop].h[i].common_sibling[iphen] + population[ipop].h[i].e_noise[iphen] + population[ipop].h[i].parental_effect[iphen];
     }
     
     return true;
 }
 
+
+// this will be used for parental effect
+// we just use "phen" in ras_scale_AD_compute_GEF for parental effect (F)
 bool Simulation::ras_save_human_info_to_Pop_info_prev_gen(int ipop)
 {
     unsigned long int n_human=population[ipop].h.size();
@@ -2472,7 +2515,8 @@ bool Simulation::ras_fill_Pop_info_prev_gen_for_gen0_prev(int ipop)
         double vf=population[ipop]._pheno_scheme[iphen]._vf;
         if (vf != 0)
         {
-            unsigned seed=ras_now_nanoseconds()+iphen;
+            ///unsigned seed=ras_now_nanoseconds()+iphen;
+            unsigned seed = ras_glob_seed();
             std::default_random_engine generator(seed);
             std::normal_distribution<double> distribution(0.0, std::sqrt(vf));
 
@@ -2566,10 +2610,14 @@ bool Simulation::ras_compute_mating_value_selection_value(int gen_num, int ipop)
         _gen0_SV_mean[ipop]=CommFunc::mean(x_sv);
     }
 
+    // scale and function
     for (unsigned long int i=0; i<nh; i++)
     {
-        double sv_standardized=(x_sv[i]-_gen0_SV_mean[ipop])/std::sqrt(_gen0_SV_var[ipop]);
-        population[ipop].h[i].selection_value=ras_selection_func(gen_num, ipop, sv_standardized);
+        double sv_standardized = x_sv[i]-_gen0_SV_mean[ipop]; // no divide by 0, if _gen0_SV_var[ipop]==0
+        if(_gen0_SV_var[ipop]>0)
+            sv_standardized = (x_sv[i]-_gen0_SV_mean[ipop])/std::sqrt(_gen0_SV_var[ipop]);
+        population[ipop].h[i].selection_value = sv_standardized;
+        population[ipop].h[i].selection_value_func = ras_selection_func(gen_num, ipop, sv_standardized);
     }
     
     return true;
@@ -2655,7 +2703,7 @@ double Simulation::ras_selection_func(int gen_num, int ipop, double z)
         double p1 = population[ipop]._selection_func_par1[index_generartion];
         double thr = population[ipop]._selection_func_par2[index_generartion];
         double p2 = 1;
-        return (z<=thr ? p1 : p2);
+        return (z<=thr ? p1 : p2); // here p2 is 1
     }
     
     return 1;

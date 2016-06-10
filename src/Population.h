@@ -119,6 +119,7 @@ public:
     std::vector<double> phen; // each human can have several phenotypes
     double mating_value;
     double selection_value;
+    double selection_value_func;
     int gen_num; // the i_th generation
     int sex; // 1=male, 2=female
     unsigned long int ID;
@@ -234,6 +235,7 @@ class Parameters
 {
 public:
     int _n_pop;
+    unsigned _seed;
     // pupulations information
     std::vector<std::string> file_gen_info;               // for each population
     std::vector<std::string> file_hap_name;               // for each population
@@ -286,6 +288,7 @@ public:
     void init(int npop)
     {
         _n_pop=npop;
+        _seed=0;
         avoid_inbreeding=false;
         no_output=false;
         _interval=false;
@@ -312,7 +315,7 @@ public:
         _lambda.resize(npop);
         _MM_percent.resize(npop,0);
         _RM.resize(npop,false);
-        
+
         // we can not set _gamma.resize(npheno,0), because _gamma.size=npheno
         //_gamma.resize(npheno,0); // for each phenotype and all populations
     }
@@ -334,7 +337,7 @@ public:
     std::vector<std::string> _selection_func; // for each generation
     std::vector<double> _selection_func_par1; // for each generation
     std::vector<double> _selection_func_par2; // for each generation
-    std::vector<std::vector<std::string> > _hap_legend_sample_name; // for each chr, with 3 columns
+    std::vector<std::vector<std::string> > _hap_legend_sample_name; // for each chr, with 3 columns (hap,legend,sample)
     std::vector<rMap> _rmap;                                        // for each chr
     std::vector<MutationMap> _mutation_map;                         // for each chr
     std::vector<std::vector<double> > _recom_prob;                  // for each chr
@@ -355,8 +358,9 @@ public:
 
     // return
     std::vector<double> ret_var_mating_value;
-    std::vector<std::vector<double> > ret_var_parental_effect;
-    std::vector<std::vector<double> > ret_var_phen;
+    std::vector<double> ret_var_selection_value;
+    std::vector<std::vector<double> > ret_var_F;
+    std::vector<std::vector<double> > ret_var_P;
     std::vector<std::vector<double> > ret_var_A;
     std::vector<std::vector<double> > ret_var_D;
     std::vector<std::vector<double> > ret_var_C;
@@ -366,7 +370,6 @@ public:
     
 private:
     int ras_get_ind_active_chr(int chr);
-    unsigned ras_now_nanoseconds(void);
     
 public:
     int ras_read_generation_info_file(std::string file_gen_info);
@@ -388,6 +391,7 @@ public:
     std::vector<double> get_phen(int iphen);
     std::vector<double> get_mating_value(void);
     std::vector<double> get_selection_value(void);
+    double compute_couple_cor_mating_value(void);
 
 };
 

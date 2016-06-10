@@ -12,9 +12,9 @@ unsigned RasRandomNumber::ras_now_nanoseconds(void)
 }
 
 
-std::vector<std::vector<double> > RasRandomNumber::ras_mvnorm(int n, std::vector<double> mu, std::vector<std::vector<double> > corr)
+std::vector<std::vector<double> > RasRandomNumber::ras_mvnorm(unsigned long int n, std::vector<double> &mu, std::vector<std::vector<double> > &corr, unsigned seed)
 {
-    unsigned seed=ras_now_nanoseconds();
+    if (seed==0) seed=ras_now_nanoseconds();
     std::default_random_engine generator(seed);
     std::normal_distribution<double> distribution(0.0,1.0);
     
@@ -38,14 +38,13 @@ std::vector<std::vector<double> > RasRandomNumber::ras_mvnorm(int n, std::vector
     std::vector<std::vector<double> > z  (n,std::vector<double> (ncol,0));
     
     
-    for (int i=0; i<n; i++){
+    for (unsigned long int i=0; i<n; i++){
         for (int j=0; j<ncol; j++){
-            double number = distribution(generator);
-            z[i][j]=number;
+            z[i][j] = distribution(generator); // standard normal rv
         }
     }
     std::vector<std::vector<double> > C= RasMatrix::ras_prod_mat(z,chol);
-    for (int i=0; i<n; i++){
+    for (unsigned long int i=0; i<n; i++){
         for (int j=0; j<ncol; j++){
             ret[i][j]=mu[j]+C[i][j];
         }
@@ -55,23 +54,22 @@ std::vector<std::vector<double> > RasRandomNumber::ras_mvnorm(int n, std::vector
 
 
 
-std::vector<int> RasRandomNumber::ras_rpois(int n, double lam)
+std::vector<int> RasRandomNumber::ras_rpois(unsigned long int n, double lam, unsigned seed)
 {
-//    std::default_random_engine generator(time(0));
-    unsigned seed=ras_now_nanoseconds();
+    if (seed==0) seed=ras_now_nanoseconds();
     std::default_random_engine generator(seed);
     std::poisson_distribution<int> distribution(lam);
     
     std::vector<int> number(n);
-    for (int i=0; i<n; i++)
+    for (unsigned long int i=0; i<n; i++)
         number[i] = distribution(generator);
     return number;
 }
 
-int RasRandomNumber::ras_rpois(double lam)
+int RasRandomNumber::ras_rpois(double lam, unsigned seed)
 {
     //    std::default_random_engine generator(time(0));
-    unsigned seed=ras_now_nanoseconds();
+    if (seed==0) seed=ras_now_nanoseconds();
     std::default_random_engine generator(seed);
     std::poisson_distribution<int> distribution(lam);
     
@@ -81,17 +79,22 @@ int RasRandomNumber::ras_rpois(double lam)
 
 
 
-double RasRandomNumber::ras_uniform()
+double RasRandomNumber::ras_uniform(unsigned seed)
 {
-    static std::default_random_engine re;
+    if (seed==0) seed=ras_now_nanoseconds();
+    static std::default_random_engine re(seed);
     static std::uniform_real_distribution<double> Dist(0,1);
     return Dist(re);
 }
 
-std::vector<int> RasRandomNumber::ras_SampleWithoutReplacement(int populationSize, int sampleSize)
+std::vector<unsigned long int> RasRandomNumber::ras_SampleWithoutReplacement(unsigned long int populationSize, unsigned long int sampleSize, unsigned seed)
 {
+    if (seed==0) seed=ras_now_nanoseconds();
+    static std::default_random_engine re(seed);
+    static std::uniform_real_distribution<double> Dist(0,1);
+
     // Use Knuth's variable names
-    std::vector<int> samples(sampleSize);
+    std::vector<unsigned long int> samples(sampleSize);
     int n = sampleSize;
     int N = populationSize;
     
@@ -101,7 +104,7 @@ std::vector<int> RasRandomNumber::ras_SampleWithoutReplacement(int populationSiz
     
     while (m < n)
     {
-        u = ras_uniform(); // call a uniform(0,1) random number generator
+        u = Dist(re); // call a uniform(0,1) random number generator
         
         if ( (N - t)*u >= n - m )
         {

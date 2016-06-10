@@ -4,6 +4,7 @@
 #include <cmath> // for round, floor, ceil, trunc
 #include <vector>
 #include <cstdlib>      // std::rand, std::srand
+#include <random>
 
 #include "Population.h"
 
@@ -58,7 +59,6 @@ private:
     void ras_save_res(void);
     bool read_migration_file(void);
     bool ras_do_migration(int gen_ind);
-    unsigned ras_now_nanoseconds(void);
     bool ras_save_genotypes(int gen_num);
     
     std::vector<part> recombine(chromosome &d1, int starting_haplotype, std::vector<unsigned long int> &recombination_locs);
@@ -67,16 +67,12 @@ private:
     double ras_compute_bv_part(std::vector<part> &p, int ichr, int iphen);
     //double ras_compute_bv_additive_dominance(int ichr, int iphen, std::vector<part> &hap_rec_pat, std::vector<part> &hap_rec_mat);
     Human_CV ras_find_cv(Human &h, unsigned ichr, unsigned int iphen, unsigned ncv);
-    bool ras_compute_breeding_value(int ipop);
+    bool ras_compute_AD(int ipop);
     std::vector<Human> reproduce(int ipop, int gen_num);
     bool assort_mate(int ipop, int gen_ind);
-    bool random_mate(int ipop, int gen_ind, unsigned seed);
-    double compute_couple_var_bv(int ipop, int sex, int iphen);
-    double compute_couple_cor_bv(int ipop, int iphen);
-    double compute_couple_cor_phen(int ipop, int iphen);
-    double compute_couple_cor_mating_value(int ipop);
-    bool sim_next_generation(int gen_num, unsigned seed);
-    bool ras_create_pheno(int ipop, int iphen, double s2_a_gen0, double s2_d_gen0);
+    bool random_mate(int ipop, int gen_ind);
+    bool sim_next_generation(int gen_num);
+    bool ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0, double s2_d_gen0);
     bool ras_initial_human_gen0(int ipop);
     bool ras_allocate_memory_for_humans(std::vector<Human> &h, unsigned long int  n_people, int nchr, int nphen);
 
@@ -97,6 +93,8 @@ private:
     // dealing with .hap .legend .sample files
     bool ras_write_hap_legend_sample(int gen_num);
     bool ras_convert_interval_to_hap_matrix(int ipop, std::vector<Hap_SNP> &pops_hap, std::vector<Legend> &pops_legend, int ichr, Hap_SNP &hap_snp);
+    bool ras_convert_pop_to_indv(int ipop, std::vector<unsigned long int> &indv_id);
+
     
     // dealing with plink .ped .map files
     bool ras_write_hap_to_plink_format(int gen_num);
@@ -117,6 +115,10 @@ private:
     // mutation
     //bool ras_add_mutation(std::vector<part> &hap_rec, double lam, int ichr);
     bool ras_add_mutation(int ipop, int ichr, std::vector<part> &hap_rec_pat, std::vector<part> &hap_rec_mat);
+
+    // seed
+    std::default_random_engine glob_generator;
+    unsigned ras_glob_seed(void);
 
 
 public:

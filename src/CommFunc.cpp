@@ -26,6 +26,14 @@ int CommFunc::sum(const std::vector<int> &x)
     return d_buf;
 }
 
+unsigned long int CommFunc::sum(const std::vector<unsigned long int> &x)
+{
+    unsigned long int size = x.size();
+    unsigned long int d_buf=0.0;
+    for(unsigned long int i=0; i<size; i++) d_buf+=x[i];
+    return d_buf;
+}
+
 
 double CommFunc::mean(const std::vector<double> &x)
 {
