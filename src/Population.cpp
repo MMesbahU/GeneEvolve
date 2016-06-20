@@ -139,7 +139,7 @@ int Population::ras_read_hap_legend_sample_address_name(std::string f_name)
 
 
 
-
+/*
 // NO USE
 
 
@@ -204,7 +204,9 @@ int Population::ras_read_cv_info(std::string f_name, int iphen)
     
     return i;
 }
-
+*/
+ 
+ 
 
 // THIS IS FOR Additive and Dominance
 
@@ -240,7 +242,7 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
     
     int i=0;
     // this file has header
-    // discard first line which is heder
+    // discard the first line which is heder
     std::getline(ifile, line);
     //std::cout << std::endl;
     while (std::getline(ifile, line)){
@@ -283,11 +285,10 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
 
 int Population::ras_get_ind_active_chr(int chr)
 {
-    int ret=-1;
     for (int j=0; j<(int)_all_active_chrs.size(); j++)
         if (_all_active_chrs[j]==chr) return j;
     
-    return ret;
+    return -1;
 }
 
 

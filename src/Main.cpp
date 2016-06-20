@@ -150,7 +150,6 @@ void helpFile()
     printf("        --file_hap_name          : [filename]\n");
     printf("        --file_recom_map         : [filename]\n");
     printf("        --file_mutation_map      : [filename]\n");
-    printf("        --selection_func         : [logit 0 1]\n");
     printf("        --RM                     : [off]  ->  Random Mating\n");
     printf("        --MM                     : [0]\n");
     printf("          Percentage of individuals who have more than 1 spouse (0<=MM<=1).\n");

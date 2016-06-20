@@ -350,13 +350,20 @@ bool Simulation::ras_init_parameters(void)
                 unsigned long int rmap_st = population[ipop]._rmap[ichr].bp[0];
                 int nrmap_chr=population[ipop]._rmap[ichr].bp.size();
                 unsigned long int rmap_en = population[ipop]._rmap[ichr].bp[nrmap_chr-1];
-                int ncv_chr=population[ipop]._pheno_scheme[iphen]._cv_info.size();
+                int ncv_chr=population[ipop]._pheno_scheme[iphen]._cv_info[ichr].bp.size();
                 for (int icv=0; icv<ncv_chr; icv++)
                 {
                     unsigned long int cv_bp = population[ipop]._pheno_scheme[iphen]._cv_info[ichr].bp[icv];
                     if (cv_bp<rmap_st || cv_bp>rmap_en)
                     {
-                        std::cout << "Error: CVs should be in range of genomic map. Error in ichr " << ichr << std::endl;
+                        std::cout << "Error: CVs should be in range of genomic map. Error in chr " << population[ipop]._all_active_chrs[ichr] << std::endl;
+                        std::cout << "       rmap_st= " << rmap_st << std::endl;
+                        std::cout << "       rmap_en= " << rmap_en << std::endl;
+                        std::cout << "       cv_bp  = " << cv_bp << std::endl;
+                        std::cout << "       icv    = " << icv << std::endl;
+                        std::cout << "       maf    = " << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].maf[icv] << std::endl;
+                        std::cout << "       a      = " << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a[icv] << std::endl;
+                        std::cout << "       d      = " << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_d[icv] << std::endl;
                         return false;
                     }
                 }
@@ -2004,7 +2011,7 @@ bool Simulation::ras_compute_AD(int ipop)
                 frq[icv] = f/(2*n_human);
                 if (frq[icv]==0 || frq[icv]==1)
                 {
-                    std::cout << "Error: frq[icv]=" << frq[icv] << "; valid range 0<frq[icv]<1; in ichr=" << ichr << ", icv=" << icv << std::endl;
+                    std::cout << "Error: frq[icv]=" << frq[icv] << "; valid range 0<frq[icv]<1; in chr=" << _all_active_chrs[ichr] << ", icv=" << icv << std::endl;
                     return false;
                 }
             }
