@@ -361,7 +361,7 @@ bool Simulation::ras_init_parameters(void)
                         std::cout << "       rmap_en= " << rmap_en << std::endl;
                         std::cout << "       cv_bp  = " << cv_bp << std::endl;
                         std::cout << "       icv    = " << icv << std::endl;
-                        std::cout << "       maf    = " << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].maf[icv] << std::endl;
+                        /////std::cout << "       maf    = " << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].maf[icv] << std::endl;
                         std::cout << "       a      = " << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a[icv] << std::endl;
                         std::cout << "       d      = " << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_d[icv] << std::endl;
                         return false;
@@ -1015,7 +1015,7 @@ bool Simulation::ras_convert_interval_to_hap_matrix(int ipop, std::vector<Hap_SN
                 {
                     if (p.check_interval(pops_legend[root_pop].pos[ii]))
                     {
-                        if (p.hap_index< 0 || p.hap_index >= pops_hap[root_pop].hap.size())
+                        if (p.hap_index >= pops_hap[root_pop].hap.size())
                         {
                             std::cout << "Error: p.hap_index=" << p.hap_index << " is not in range, ih=" << ih << std::endl;
                             return false;
@@ -1138,7 +1138,7 @@ bool Simulation::ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_
                 {
                     if (p.check_interval(pops_legend[root_pop].pos[ii]))
                     {
-                        if (p.hap_index< 0 || p.hap_index >= pops_hap[root_pop].hap.size())
+                        if (p.hap_index >= pops_hap[root_pop].hap.size())
                         {
                             std::cout << "Error: p.hap_index=" << p.hap_index << " is not in range, ih=" << ih << std::endl;
                             return false;
@@ -1215,7 +1215,9 @@ bool Simulation::ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_
 ///////////////////////////////////////////////////////////////////////////////////////////
 // interval file format (for checking the IBDs)
 
-// the ID is zero-based
+// the ID is 1-based
+// hap_index starting from 1
+// root_population starting from 1
 bool Simulation::ras_write_hap_to_interval_format(int gen_num)
 {
     std::string sep=" ";
@@ -1252,13 +1254,13 @@ bool Simulation::ras_write_hap_to_interval_format(int gen_num)
                     for (int ip=0; ip<npart; ip++)
                     {
                         part p=population[ipop].h[ih].chr[ichr].Hap[ihap][ip];
-                        file_out << population[ipop].h[ih].ID << sep;
+                        file_out << population[ipop].h[ih].ID+1 << sep; // starting from 1
                         file_out << _all_active_chrs[ichr] << sep;
                         file_out << ihap << sep;
                         file_out << p.st << sep;
                         file_out << p.en << sep;
-                        file_out << p.hap_index << sep;
-                        file_out << p.root_population << std::endl;
+                        file_out << p.hap_index+1 << sep; // starting from 1
+                        file_out << p.root_population+1 << std::endl; // starting from 1
                     }// for parts
                 }// for ihap
 
@@ -2009,11 +2011,13 @@ bool Simulation::ras_compute_AD(int ipop)
                     f += h_cv[ih].chromatid[0].cv[icv] + h_cv[ih].chromatid[1].cv[icv];
                 }
                 frq[icv] = f/(2*n_human);
+                /*
                 if (frq[icv]==0 || frq[icv]==1)
                 {
                     std::cout << "Error: frq[icv]=" << frq[icv] << "; valid range 0<frq[icv]<1; in chr=" << _all_active_chrs[ichr] << ", icv=" << icv << std::endl;
                     return false;
                 }
+                 */
             }
             
             //if (_debug) std::cout << "A,D,bv per chr" << std::endl;
@@ -2031,22 +2035,19 @@ bool Simulation::ras_compute_AD(int ipop)
                     // if no dominance
                     if (population[ipop]._pheno_scheme[iphen]._vd==0)
                         d=0;
-                    double t = (double)h_cv[ih].chromatid[0].cv[icv] + (double)h_cv[ih].chromatid[1].cv[icv]; // 0,1,2
+                    unsigned t = h_cv[ih].chromatid[0].cv[icv] + h_cv[ih].chromatid[1].cv[icv]; // 0,1,2
                     double p=frq[icv];
                     double q=1-p;
                     // Additive
                     double alpha = a+d*(q-p);
-                    A_chr += (t-2*p)/std::sqrt(2*p*q)*alpha;
+                    A_chr += ((double)t-2*p)*alpha;
                     // Dominance
                     std::vector<double> c_t(3);
                     c_t[0] = -2*p*p;
                     c_t[1] =  2*p*q;
                     c_t[2] = -2*q*q;
-                    D_chr += c_t[t]/(2*p*q)*d;
+                    D_chr += c_t[t]*d;
                 }
-                //population[ipop].h[ih].chr[ichr].additive_chr[iphen]=G_hat;
-                //population[ipop].h[ih].chr[ichr].dominance_chr[iphen]=G-G_hat;
-                //population[ipop].h[ih].chr[ichr].bv_chr[iphen]=G;
                 population[ipop].h[ih].chr[ichr].additive_chr[iphen]=A_chr;
                 population[ipop].h[ih].chr[ichr].dominance_chr[iphen]=D_chr;
                 population[ipop].h[ih].chr[ichr].bv_chr[iphen]=A_chr+D_chr;

@@ -198,7 +198,6 @@ class CV_INFO // for each chr
 {
 public:
     std::vector<unsigned long int> bp; // for each cv
-    std::vector<double> maf; // for each cv
     std::vector<double> alpha; // for each cv
     std::vector<double> genetic_value_a; // for additive and dominace model
     std::vector<double> genetic_value_d;

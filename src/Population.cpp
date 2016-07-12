@@ -139,86 +139,19 @@ int Population::ras_read_hap_legend_sample_address_name(std::string f_name)
 
 
 
-/*
-// NO USE
-
-
-// THIS IS FOR ALPHA
-
-// processing the '--file_cv_info f_name'
-// just for '_all_active_chrs' chrs, saves the cvs info in 'cv_info'
-// f_name has header
-// f_name is a space dilimited file with 4 columns: CHR POS MAF alpha
-// each row is a chromosome
-// note to read ras_read_hap_legend_sample_address_name before running this func
-//output: nchrs
-int Population::ras_read_cv_info(std::string f_name, int iphen)
-{
-    _pheno_scheme[iphen]._cv_info.resize(_nchr);
-    
-    char sep=' ';
-    
-    std::string file_name=f_name;
-    std::ifstream ifile(file_name.c_str());
-    
-    if(!ifile)
-    {
-       std:: cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
-        return 0;
-    }
-    
-    std::string line;
-    
-    int i=0;
-    // this file has header
-    // discard first line which is heder
-    std::getline(ifile, line);
-    //std::cout << std::endl;
-    while (std::getline(ifile, line)){
-        std::istringstream iss(line);
-        std::string token;
-        
-        int chr;
-        unsigned long int bp;
-        double maf, alpha;
-        //iss >> chr >> bp >> maf >> alpha;
-        std::getline(iss, token, sep);
-        chr=std::stoi(token);
-        int j=ras_get_ind_active_chr(chr);
-        if (j>=0)
-        {
-            std::getline(iss, token, sep);
-            bp=std::stod(token); // it shopuld be stod and not stol, because in the input file we may have 1.2e+4
-            std::getline(iss, token, sep);
-            maf=std::stod(token);
-            std::getline(iss, token, sep);
-            alpha=std::stod(token);
-            
-            _pheno_scheme[iphen]._cv_info[j].bp.push_back(bp);
-            _pheno_scheme[iphen]._cv_info[j].maf.push_back(maf);
-            _pheno_scheme[iphen]._cv_info[j].alpha.push_back(alpha);
-        }
-        
-        i++;
-    }
-    
-    return i;
-}
-*/
- 
- 
 
 // THIS IS FOR Additive and Dominance
 
 // processing the '--file_cv_info f_name'
 // just for '_all_active_chrs' chrs, saves the cvs info in 'cv_info'
 // f_name has header
-// f_name is a space dilimited file with 5 columns: chr pos maf a d
+// f_name is a space dilimited file with 4 columns: chr pos a d
 // each row is a chromosome
 // note to read ras_read_hap_legend_sample_address_name before running this func
 //output: ncv
 int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iphen)
 {
+    unsigned long int file_ncol=4;
     _pheno_scheme[iphen]._cv_info.resize(_nchr);
     
     char sep=' ';
@@ -232,9 +165,9 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
         return 0;
     }
     
-    if(CommFunc::ras_FileColNumber(file_name," ") != 5)
+    if(CommFunc::ras_FileColNumber(file_name," ") != file_ncol)
     {
-       std:: cout << "Error: file ["+ file_name +"] should have 5 columns." << std::endl;
+       std:: cout << "Error: file ["+ file_name +"] should have " << file_ncol << " columns." << std::endl;
        return 0;
     }
     
@@ -251,8 +184,8 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
         
         int chr;
         unsigned long int bp;
-        double maf, genetic_value_a, genetic_value_d;
-        //iss >> chr >> bp >> maf >> a >> d;
+        double genetic_value_a, genetic_value_d;
+        //iss >> chr >> bp >> a >> d;
         std::getline(iss, token, sep);
         chr=std::stoi(token);
         int j=ras_get_ind_active_chr(chr);
@@ -261,14 +194,11 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
             std::getline(iss, token, sep);
             bp=std::stod(token); // it shopuld be stod and not stol, because in the input file we may have 1.2e+4
             std::getline(iss, token, sep);
-            maf=std::stod(token);
-            std::getline(iss, token, sep);
             genetic_value_a=std::stod(token);
             std::getline(iss, token, sep);
             genetic_value_d=std::stod(token);
             
             _pheno_scheme[iphen]._cv_info[j].bp.push_back(bp);
-            _pheno_scheme[iphen]._cv_info[j].maf.push_back(maf);
             _pheno_scheme[iphen]._cv_info[j].genetic_value_a.push_back(genetic_value_a);
             _pheno_scheme[iphen]._cv_info[j].genetic_value_d.push_back(genetic_value_d);
         }
