@@ -20,6 +20,11 @@ Or,
     cd GeneEvolve-master
 
 
+# Binary files
+The compiled files for Linux and Mac users are availible in the main direcory: `GeneEvolve_Linux` and `GeneEvolve_Mac`
+
+
+
 # Compile
 To compile GeneEvolve, run the following commands:
 
