@@ -896,6 +896,7 @@ bool Simulation::ras_save_genotypes(int gen_num)
     // interval combined by other parameters
     if (_interval)
     {
+        std::cout << "      Start writing in the interval format." << std::endl;
         if (!ras_write_hap_to_interval_format(gen_num))
         {
             std::cout << "Error in reading and writing haplotypes!" << std::endl;
@@ -1810,6 +1811,7 @@ std::vector<Human> Simulation::reproduce(int ipop, int gen_num)
                     std::vector<part> hap_rec_pat=recombine(h_pat.chr[ichr], starting_haplotype_pat, rec_bp_loc_pat);
                     
                     //get new maternal haplotype
+                    seed_loc=std::rand();
                     std::vector<unsigned long int> rec_bp_loc_mat=ras_sim_loc_rec(population[ipop]._recom_prob[ichr], population[ipop]._rmap[ichr], seed_loc);
                     int starting_haplotype_mat=(std::rand() % 2);
                     std::vector<part> hap_rec_mat=recombine(h_mat.chr[ichr], starting_haplotype_mat, rec_bp_loc_mat);
