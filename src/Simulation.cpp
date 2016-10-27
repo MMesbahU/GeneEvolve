@@ -285,6 +285,21 @@ bool Simulation::ras_init_parameters(void)
             std::cout << "       Number of CVs                  = " << ncv << std::endl;
             if (ncv==0) return false;
             
+            if(_debug)
+            {
+                for (int ichr=0; ichr<nchr; ichr++)
+                {
+                    for (int icv=0; icv<population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a.size(); icv++)
+                    {
+                        std::cout << "       ichr=" << ichr;
+                        std::cout << "\ta=" << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a[icv];
+                        std::cout << "\td=" << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_d[icv];
+                        std::cout << std::endl;
+                    }
+                }
+            }
+
+            
             ///////////////////////////
             //ras_read_cvs_address_name
             int ncv_hapfile = population[ipop].ras_read_cvs_address_name(par.file_cvs[ipop][iphen],iphen);
