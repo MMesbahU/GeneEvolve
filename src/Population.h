@@ -97,9 +97,9 @@ public:
         chromatid.resize(2);
         for (int i=0; i<2; i++)
         {
-            chromatid[i].cv.resize(ncv);
-            chromatid[i].genetic_value_a.resize(ncv);
-            chromatid[i].genetic_value_d.resize(ncv);
+            chromatid[i].cv.resize(ncv,0);
+            chromatid[i].genetic_value_a.resize(ncv,0);
+            chromatid[i].genetic_value_d.resize(ncv,0);
         }
     }
 };
