@@ -67,7 +67,7 @@ private:
     double ras_compute_bv_part(std::vector<part> &p, int ichr, int iphen);
     //double ras_compute_bv_additive_dominance(int ichr, int iphen, std::vector<part> &hap_rec_pat, std::vector<part> &hap_rec_mat);
     Human_CV ras_find_cv(Human &h, unsigned ichr, unsigned int iphen, unsigned ncv);
-    bool ras_compute_AD(int ipop);
+    bool ras_compute_AD(int ipop, int gen_num);
     std::vector<Human> reproduce(int ipop, int gen_num);
     bool assort_mate(int ipop, int gen_ind);
     bool random_mate(int ipop, int gen_ind);

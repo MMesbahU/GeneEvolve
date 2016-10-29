@@ -289,7 +289,7 @@ bool Simulation::ras_init_parameters(void)
             {
                 for (int ichr=0; ichr<nchr; ichr++)
                 {
-                    for (int icv=0; icv<population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a.size(); icv++)
+                    for (unsigned icv=0; icv<population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a.size(); icv++)
                     {
                         std::cout << "       ichr=" << ichr;
                         std::cout << "\ta=" << population[ipop]._pheno_scheme[iphen]._cv_info[ichr].genetic_value_a[icv];
@@ -435,7 +435,7 @@ bool Simulation::ras_init_generation0(void)
         ///////////////////////////////////////////////////////
         //computing additive and dominance components
         std::cout << "      computing additive and dominance components" << std::endl;
-        if(!ras_compute_AD(ipop) ) return false;
+        if(!ras_compute_AD(ipop, 0) ) return false;
 
         
         ///////////////////////////
@@ -516,20 +516,20 @@ bool Simulation::ras_init_generation0(void)
         int nphen=population[ipop]._pheno_scheme.size();
         for (int iphen=0; iphen<nphen; iphen++)
         {
-            double var_P=CommFunc::var(population[ipop].get_phen(iphen));
+            double var_P = CommFunc::var(population[ipop].get_phen(iphen));
             double var_A = CommFunc::var(population[ipop].get_additive(iphen));
             double var_D = CommFunc::var(population[ipop].get_dominance(iphen));
             double var_C = CommFunc::var(population[ipop].get_common(iphen));
-            double var_G=CommFunc::var(population[ipop].get_bv(iphen));
-            double var_E=CommFunc::var(population[ipop].get_e_noise(iphen));
-            double var_F=CommFunc::var(population[ipop].get_parental_effect(iphen));
-            population[ipop].ret_var_P[iphen][gen_num]=var_P;
-            population[ipop].ret_var_A[iphen][gen_num]=var_A;
-            population[ipop].ret_var_D[iphen][gen_num]=var_D;
-            population[ipop].ret_var_C[iphen][gen_num]=var_C;
-            population[ipop].ret_var_G[iphen][gen_num]=var_G;
-            population[ipop].ret_var_E[iphen][gen_num]=var_E;
-            population[ipop].ret_var_F[iphen][gen_num]=var_F;
+            double var_G = CommFunc::var(population[ipop].get_bv(iphen));
+            double var_E = CommFunc::var(population[ipop].get_e_noise(iphen));
+            double var_F = CommFunc::var(population[ipop].get_parental_effect(iphen));
+            population[ipop].ret_var_P[iphen][gen_num] = var_P;
+            population[ipop].ret_var_A[iphen][gen_num] = var_A;
+            population[ipop].ret_var_D[iphen][gen_num] = var_D;
+            population[ipop].ret_var_C[iphen][gen_num] = var_C;
+            population[ipop].ret_var_G[iphen][gen_num] = var_G;
+            population[ipop].ret_var_E[iphen][gen_num] = var_E;
+            population[ipop].ret_var_F[iphen][gen_num] = var_F;
             population[ipop].ret_h2[iphen][gen_num]=var_A/var_P;
             std::cout << "        phenotype: " << iphen+1 << std::endl;
             std::cout << "          var(A)          = " << var_A << std::endl;
@@ -1337,7 +1337,7 @@ bool Simulation::sim_next_generation(int gen_num)
         ///////////////////////////////////////////////////////
         //computing additive and dominance
         std::cout << "      computing additive and dominance components" << std::endl;
-        if(!ras_compute_AD(ipop) ) return false;
+        if(!ras_compute_AD(ipop, gen_num) ) return false;
 
         
         ///////////////////////////////////////////////////////
@@ -1997,7 +1997,7 @@ double Simulation::ras_compute_bv_part(std::vector<part> &p, int ichr, int iphen
 }
 
 
-bool Simulation::ras_compute_AD(int ipop)
+bool Simulation::ras_compute_AD(int ipop, int gen_num)
 {
     unsigned nchr = population[ipop].h[0].chr.size();
     unsigned nphen = population[ipop]._pheno_scheme.size();
@@ -2017,6 +2017,7 @@ bool Simulation::ras_compute_AD(int ipop)
             {
                 h_cv[ih]=ras_find_cv(population[ipop].h[ih], ichr, iphen, ncv);
             }
+            
             // we have all cvs
             //if (_debug) std::cout << "computing frq" << std::endl;
             std::vector<double> frq(ncv);
@@ -2035,6 +2036,26 @@ bool Simulation::ras_compute_AD(int ipop)
                     return false;
                 }
                  */
+            }
+            
+            if (_debug)
+            {
+                if(gen_num==_tot_gen)
+                {
+                    std::string outfile_name=_out_prefix +".pop"+ std::to_string(ipop+1) + ".gen" + std::to_string(gen_num)+".chr"+ std::to_string(_all_active_chrs[ichr])+".cvval";
+                    std::ofstream file_out;
+                    file_out.open(outfile_name.c_str());
+                    
+                    for(unsigned long int ih=0; ih<n_human; ih++) // for humans
+                    {
+                        for (unsigned icv=0; icv<ncv; icv++) // for all CVs
+                        {
+                            file_out << h_cv[ih].chromatid[0].cv[icv] << " " << h_cv[ih].chromatid[1].cv[icv] << " ";
+                        }
+                        file_out << << std::endl;
+                    }
+                    file_out.close();
+                }
             }
             
             //if (_debug) std::cout << "A,D,bv per chr" << std::endl;
