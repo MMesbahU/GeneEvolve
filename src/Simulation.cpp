@@ -1044,11 +1044,6 @@ bool Simulation::ras_convert_interval_to_hap_matrix(int ipop, std::vector<Hap_SN
                             hap_snp.hap[2*ih+ihaps][ii] = pops_hap[root_pop].hap[p.hap_index][ii];
 
                     }
-                    // for the last part and last snps
-                    if (ii==pops_legend[root_pop].pos.size()-1 && ip==(int)population[ipop].h[ih].chr[ichr].Hap[ihaps].size()-1)
-                    {
-                        hap_snp.hap[2*ih+ihaps][ii]=pops_hap[root_pop].hap[p.hap_index][ii];
-                    }
                 }
             }
         }
@@ -1166,11 +1161,6 @@ bool Simulation::ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_
                         else // no mutation
                             matrix_plink_ped[ih][2*ii+ihaps]= pops_hap[root_pop].hap[p.hap_index][ii];
                     }
-                    // for the last part and last snps
-                    if (ii==pops_legend[root_pop].pos.size()-1 && ip==(int)population[ipop].h[ih].chr[ichr].Hap[ihaps].size()-1)
-                    {
-                        matrix_plink_ped[ih][2*ii+ihaps]=pops_hap[root_pop].hap[p.hap_index][ii];
-                    }
                 }
             }
         }
@@ -1181,7 +1171,9 @@ bool Simulation::ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_
     {
         //check MAF for the last SNPs
         std::cout << "The last allele frequencies" << std::endl;
-        for (unsigned long int k=10; k>0; k--)
+        unsigned long int sttt=10;
+        if (nsnp<sttt) sttt=nsnp;
+        for (unsigned long int k=sttt; k>0; k--)
         {
             std::vector<double> temp(2*n_human);
             unsigned long int ii_ind=nsnp-k;
@@ -2052,7 +2044,7 @@ bool Simulation::ras_compute_AD(int ipop, int gen_num)
                         {
                             file_out << h_cv[ih].chromatid[0].cv[icv] << " " << h_cv[ih].chromatid[1].cv[icv] << " ";
                         }
-                        file_out << << std::endl;
+                        file_out << std::endl;
                     }
                     file_out.close();
                 }
@@ -2137,7 +2129,7 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
         for (unsigned icv=0; icv<ncv; icv++) // for all CVs
         {
             unsigned long int bp = population[root_population]._pheno_scheme[iphen]._cv_info[ichr].bp[icv];
-            if (h.chr[ichr].Hap[0][j].check_interval(bp)) // if there is a cv in this part, extraxt its value from its root_population and hap_index
+            if (h.chr[ichr].Hap[0][j].check_interval(bp)) // if there is a cv in this part, then extraxt its value from its root_population and hap_index
             {
                 bool cv_val = population[root_population]._pheno_scheme[iphen]._cvs[ichr].val[hap_index][icv];
                 
@@ -2166,7 +2158,7 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
         for (unsigned icv=0; icv<ncv; icv++) // for all CVs
         {
             unsigned long int bp=population[root_population]._pheno_scheme[iphen]._cv_info[ichr].bp[icv];
-            if (h.chr[ichr].Hap[1][j].check_interval(bp)) // if there is a cv in this part, extrcat its root_population and hap_index
+            if (h.chr[ichr].Hap[1][j].check_interval(bp)) // if there is a cv in this part, then extrcat its root_population and hap_index
             {
                 bool cv_val = population[root_population]._pheno_scheme[iphen]._cvs[ichr].val[hap_index][icv];
 
