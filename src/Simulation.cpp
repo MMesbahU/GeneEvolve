@@ -369,7 +369,7 @@ bool Simulation::ras_init_parameters(void)
                 for (int icv=0; icv<ncv_chr; icv++)
                 {
                     unsigned long int cv_bp = population[ipop]._pheno_scheme[iphen]._cv_info[ichr].bp[icv];
-                    if (cv_bp<rmap_st || cv_bp>rmap_en)
+                    if (cv_bp<rmap_st || cv_bp=>rmap_en)
                     {
                         std::cout << "Error: CVs should be in range of genomic map. Error in chr " << population[ipop]._all_active_chrs[ichr] << std::endl;
                         std::cout << "       rmap_st= " << rmap_st << std::endl;
@@ -1567,7 +1567,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     unsigned seed = ras_glob_seed();
 
     std::srand(seed);
-    std::default_random_engine generator(seed+1);
+    std::default_random_engine generator(ras_glob_seed());
     std::uniform_real_distribution<double> distribution(0.0,1.0);
 
     unsigned long int n_h =(int)population[ipop].h.size();
@@ -1575,7 +1575,6 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     {
         std::cout << "Simulation::random_mate; seed=" << seed << std::endl;
         std::cout << "Simulation::random_mate; n_h=" << n_h << std::endl;
-        std::cout << "random num=" << distribution(generator) << ", " << distribution(generator) << std::endl;
     }
 
     
@@ -1595,7 +1594,6 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
                 ind_mv.mating_value=population[ipop].h[i].mating_value;
                 pos_male_marriageable.push_back(ind_mv);
                 // cjeck if this ind has 2 spouses
-                //double r=(double)std::rand()/RAND_MAX;
                 double r=distribution(generator);
                 if (r < population[ipop]._MM_percent)
                     pos_male_marriageable.push_back(ind_mv);
@@ -1607,7 +1605,6 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
                 ind_mv.mating_value=population[ipop].h[i].mating_value;
                 pos_female_marriageable.push_back(ind_mv);
                 // cjeck if this ind has 2 spouses
-                //double r=(double)std::rand()/RAND_MAX;
                 double r=distribution(generator);
                 if (r < population[ipop]._MM_percent)
                     pos_female_marriageable.push_back(ind_mv);
