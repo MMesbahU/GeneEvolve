@@ -369,7 +369,7 @@ bool Simulation::ras_init_parameters(void)
                 for (int icv=0; icv<ncv_chr; icv++)
                 {
                     unsigned long int cv_bp = population[ipop]._pheno_scheme[iphen]._cv_info[ichr].bp[icv];
-                    if (cv_bp<rmap_st || cv_bp=>rmap_en)
+                    if (cv_bp<rmap_st || cv_bp>=rmap_en)
                     {
                         std::cout << "Error: CVs should be in range of genomic map. Error in chr " << population[ipop]._all_active_chrs[ichr] << std::endl;
                         std::cout << "       rmap_st= " << rmap_st << std::endl;
