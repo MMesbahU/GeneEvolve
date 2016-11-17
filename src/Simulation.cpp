@@ -1495,7 +1495,6 @@ bool Simulation::random_mate(int ipop, int gen_ind)
     {
         std::cout << "Simulation::random_mate; seed=" << seed << std::endl;
         std::cout << "Simulation::random_mate; n_h=" << n_h << std::endl;
-        std::cout << "random num=" << distribution(generator) << ", " << distribution(generator) << std::endl;
     }
     
     // MARRIAGEABLE PEOPLE - this section creates an equal number of males and females who will be paired off below
@@ -1568,7 +1567,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
 
     std::srand(seed);
     std::default_random_engine generator(ras_glob_seed());
-    std::uniform_real_distribution<double> distribution(0.0,1.0);
+    std::uniform_real_distribution<double> distribution(0.0,1.0); // for selection function
 
     unsigned long int n_h =(int)population[ipop].h.size();
     if (_debug)
@@ -1626,6 +1625,24 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
         return false;
     }
     
+    // remove extra inds randomly
+    if(num_males_mate>num_females_mate)
+    {
+        std::random_shuffle(pos_male_marriageable.begin(),pos_male_marriageable.end());
+        int n_remove=num_males_mate-num_females_mate;
+        // erase the first n_remove elements:
+        pos_male_marriageable.erase(pos_male_marriageable.begin(),pos_male_marriageable.begin()+n_remove);
+    }
+    else if(num_males_mate<num_females_mate)
+    {
+        std::random_shuffle(pos_female_marriageable.begin(),pos_female_marriageable.end());
+        int n_remove=num_females_mate-num_males_mate;
+        // erase the first n_remove elements:
+        pos_female_marriageable.erase(pos_female_marriageable.begin(),pos_female_marriageable.begin()+n_remove);
+    }
+    
+    
+    
     //order the males & females by their mating phenotypic value, lowest to highest
     std::sort(pos_male_marriageable.begin(),pos_male_marriageable.end(),ValueCmp);
     std::sort(pos_female_marriageable.begin(),pos_female_marriageable.end(),ValueCmp);
@@ -1644,13 +1661,13 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     std::vector<std::vector<double> > template_AM_dist = RasRandomNumber::ras_mvnorm(n_couples2, mu, corr, ras_glob_seed());
     
     std::vector<double> t1(template_AM_dist.size());
-    for (int i=0; i<(int)template_AM_dist.size(); i++) t1[i]=template_AM_dist[i][0];
+    for (unsigned long int i=0; i<template_AM_dist.size(); i++) t1[i]=template_AM_dist[i][0];
     std::vector<double> t2(template_AM_dist.size());
-    for (int i=0; i<(int)template_AM_dist.size(); i++) t2[i]=template_AM_dist[i][1];
+    for (unsigned long int i=0; i<template_AM_dist.size(); i++) t2[i]=template_AM_dist[i][1];
     
     std::cout << "        cor(mates)        = " << CommFunc::cor(t1,t2) << std::endl;
     
-    std::vector<unsigned long int> rank_template_males = CommFunc::ras_rank(t1);
+    std::vector<unsigned long int> rank_template_males = CommFunc::ras_rank(t1); // smallets one has rank 0, ...
     std::vector<unsigned long int> rank_template_females = CommFunc::ras_rank(t2);
     //std::cout << "debug: rank" << std::endl;
     
