@@ -92,7 +92,7 @@ bool format_hap::read_hap(Hap_SNP &hap_snp, std::string f_name, unsigned long in
     // each line is one SNP
     while (std::getline(ifile, line)){
         if (show_iterations && j%1000==0) std::cout << "\r      " << j << " of " << nsnp << " read ..." << std::flush;
-        for(i=0; i<nhap-1; i++)// nhap-1, because index starts from 0
+        for(i=0; i<nhap; i++)
         {
             if (line[2*i]=='0')
                 hap_snp.hap[i][j]=false;
@@ -100,7 +100,7 @@ bool format_hap::read_hap(Hap_SNP &hap_snp, std::string f_name, unsigned long in
                 hap_snp.hap[i][j]=true;
             else
             {
-                std::cout << "Error: undefined character in file ["+ file_name +"], line number:" << j << std::endl;
+                std::cout << "Error: undefined character [" << line[2*i] << "] in file ["+ file_name +"], line number:" << j << std::endl;
                 return false;
             }
         }

@@ -664,6 +664,7 @@ double Population::compute_couple_var_bv(int sex, int iphen)
     else return 0;
 }
 
+ */
 
 double Population::compute_couple_cor_bv(int iphen)
 {
@@ -681,23 +682,23 @@ double Population::compute_couple_cor_bv(int iphen)
     return CommFunc::cor(bv_male,bv_female);
 }
 
+
 double Population::compute_couple_cor_phen(int iphen)
 {
     unsigned long int n_couples = _couples_info.size();
-    std::vector<double> bv_male(n_couples);
-    std::vector<double> bv_female(n_couples);
+    std::vector<double> phen_male(n_couples);
+    std::vector<double> phen_female(n_couples);
     
     for (unsigned long int i=0; i<n_couples; i++)
     {
         unsigned long int pos_m=_couples_info[i].pos_male;
         unsigned long int pos_f=_couples_info[i].pos_female;
-        bv_male[i]=h[pos_m].phen[iphen];
-        bv_female[i]=h[pos_f].phen[iphen];
+        phen_male[i]=h[pos_m].phen[iphen];
+        phen_female[i]=h[pos_f].phen[iphen];
     }
-    return CommFunc::cor(bv_male,bv_female);
+    return CommFunc::cor(phen_male,phen_female);
 }
 
-*/
 
 double Population::compute_couple_cor_mating_value(void)
 {

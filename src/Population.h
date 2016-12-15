@@ -266,22 +266,22 @@ public:
     
     // output
     std::string prefix;
-    std::string format_output;
-    bool no_output;
-    bool _interval;
+    bool _out_hap;
+    bool _out_plink;
+    bool _out_interval;
     bool output_all_generations;
     
     // default values
     Parameters(void)
     {
         avoid_inbreeding=false;
-        no_output=false;
-        _interval=false;
+        _out_hap=false;
+        _out_plink=false;
+        _out_interval=false;
         output_all_generations=false;
         prefix="out";
         help=false;
         debug=false;
-        format_output="hap";
         file_migration="";
     }
     void init(int npop)
@@ -289,13 +289,13 @@ public:
         _n_pop=npop;
         _seed=0;
         avoid_inbreeding=false;
-        no_output=false;
-        _interval=false;
+        _out_hap=false;
+        _out_plink=false;
+        _out_interval=false;
         output_all_generations=false;
         prefix="out";
         help=false;
         debug=false;
-        format_output="hap";
         file_migration="";
 
         file_gen_info.resize(npop);
@@ -345,12 +345,12 @@ public:
     std::vector<double> _var_d_gen0;                               // for each pheno
     std::vector<int> _all_active_chrs;                              // for each chr
     bool _avoid_inbreeding;
-    bool _no_output;
-    bool _interval; // for generating interval output
+    bool _out_hap;
+    bool _out_plink;
+    bool _out_interval;// for generating interval output
     bool _output_all_generations;
     bool _debug;
     std::string _out_prefix;
-    std::string _format_output;
     double _MM_percent; // Random mating percent (inds who have 2 spouses)
     bool _RM; // Random mating
     
@@ -391,7 +391,8 @@ public:
     std::vector<double> get_mating_value(void);
     std::vector<double> get_selection_value(void);
     double compute_couple_cor_mating_value(void);
-
+    double compute_couple_cor_phen(int iphen);
+    double compute_couple_cor_bv(int iphen);
 };
 
 

@@ -179,13 +179,13 @@ void helpFile()
     
     std::cout << std::endl;
     printf(" --------- Other parameters\n");
-    printf("        --seed                   : [0]  ->  can be any passitive number.\n");
+    printf("        --seed                   : [0]    ->  can be any passitive number.\n");
     printf("        --avoid_inbreeding       : [Off]  ->  [On] means no inbreeding.\n");
     printf("        --debug                  : [Off]\n");
     printf("        --prefix                 : [out]\n");
-    printf("        --format_output          : [hap]  ->  can be [hap], [plink] or [interval].\n");
-    printf("        --interval               : [Off]  ->  [On] means also output the [interval] format.\n");
-    printf("        --no_output              : [Off]\n");
+    printf("        --out_hap                : [ON]   ->  [On] means output in the [hap] format.\n");
+    printf("        --out_plink              : [Off]  ->  [On] means output in the [plink] format.\n");
+    printf("        --out_interval           : [Off]  ->  [On] means output in the [interval] format.\n");
     printf("        --output_all_generations : [Off]\n");
     
 
@@ -294,14 +294,14 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
         else if(vec_arg[i]=="--prefix"){
             par.prefix=vec_arg[++i];
         }
-        else if(vec_arg[i]=="--format_output"){
-            par.format_output=vec_arg[++i];
+        else if(vec_arg[i]=="--out_hap"){
+            par._out_hap=true;
         }
-        else if(vec_arg[i]=="--no_output"){
-            par.no_output=true;
+        else if(vec_arg[i]=="--out_plink"){
+            par._out_plink=true;
         }
-        else if(vec_arg[i]=="--interval"){
-            par._interval=true;
+        else if(vec_arg[i]=="--out_interval"){
+            par._out_interval=true;
         }
         else if(vec_arg[i]=="--output_all_generations"){
             par.output_all_generations=true;
@@ -548,12 +548,6 @@ bool parameter_check(Parameters &par)
         std::cout << " Warning: when there is one population, the parameter [--file_migration] is redundant." << std::endl;
     }
     
-    //check par.format_output
-    if (!(par.format_output=="hap" || par.format_output=="plink" || par.format_output=="interval"))
-    {
-        std::cout << "Error: unknown output format [" +par.format_output+ "]." << std::endl;
-        return false;
-    }
     
     return true;
 }
@@ -608,9 +602,9 @@ bool parameter_print(Parameters &par)
     std::cout << "      --avoid_inbreeding       : [" << (par.avoid_inbreeding ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --debug                  : [" << (par.debug ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --prefix                 : [" << par.prefix << "]" << std::endl;
-    std::cout << "      --format_output          : [" << par.format_output << "]" << std::endl;
-    std::cout << "      --no_output              : [" << (par.no_output ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --interval               : [" << (par._interval ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --out_hap                : [" << (par._out_hap ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --out_plink              : [" << (par._out_plink ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --out_interval           : [" << (par._out_interval ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --output_all_generations : [" << (par.output_all_generations ? "On" : "Off") << "]" << std::endl;
     std::cout << std::endl;
     return true;

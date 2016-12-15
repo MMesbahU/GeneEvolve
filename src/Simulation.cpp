@@ -120,7 +120,7 @@ bool Simulation::run(void)
     
 
     // read the hap file and write the output for the last generation
-    if (!par.no_output && !par.output_all_generations)
+    if (!par.output_all_generations)
     {
         time_prev = time(0);
         std::cout << " ------------------------------------------------------------------------------" << std::endl;
@@ -153,10 +153,11 @@ bool Simulation::ras_init_parameters(void)
     population.resize(_n_pop);
     _tot_gen=0;
     _output_all_generations=par.output_all_generations;
-    _format_output=par.format_output;
     _out_prefix=par.prefix;
     _debug=par.debug;
-    _interval=par._interval;
+    _out_hap=par._out_hap;
+    _out_plink=par._out_plink;
+    _out_interval=par._out_interval;
     
     
     _Pop_info_prev_gen.resize(_n_pop); // to save mating_value for the previous generation, for each population
@@ -171,12 +172,12 @@ bool Simulation::ras_init_parameters(void)
         
         population[ipop]._pop_num=ipop;
         population[ipop]._avoid_inbreeding=par.avoid_inbreeding;
-        population[ipop]._no_output=par.no_output;
-        population[ipop]._interval=par._interval; // for interval output
+        population[ipop]._out_hap=par._out_hap; // for hap output
+        population[ipop]._out_plink=par._out_plink; // for plink output
+        population[ipop]._out_interval=par._out_interval; // for interval output
         population[ipop]._output_all_generations=par.output_all_generations;
         population[ipop]._debug=par.debug;
         population[ipop]._out_prefix=par.prefix;
-        population[ipop]._format_output=par.format_output;
         population[ipop]._MM_percent=par._MM_percent[ipop];
         population[ipop]._RM=par._RM[ipop];
 
@@ -874,44 +875,30 @@ bool Simulation::ras_save_genotypes(int gen_num)
 {
     std::cout << " saving genotypes" << std::endl;
     
-    // hap
-    if (_format_output=="hap")
+    if (_out_hap)
     {
+        std::cout << "      Start writing in the [hap] format." << std::endl;
         if (!ras_write_hap_legend_sample(gen_num))
         {
             std::cout << "Error in reading and writing haplotypes!" << std::endl;
             return false;
         }
     }
-    // plink
-    else if (_format_output=="plink")
+
+    if (_out_plink)
     {
+        std::cout << "      Start writing in the [plink] format." << std::endl;
         if (!ras_write_hap_to_plink_format(gen_num))
         {
             std::cout << "Error in reading and writing haplotypes!" << std::endl;
             return false;
         }
     }
-    // interval
-    else if (_format_output=="interval")
-    {
-        if (!ras_write_hap_to_interval_format(gen_num))
-        {
-            std::cout << "Error in reading and writing haplotypes!" << std::endl;
-            return false;
-        }
-    }
-    else
-    {
-        std::cout << "Error: The output format [" << _format_output << "] is not defined." << std::endl;
-        return false;
-    }
-    
-    
+
     // interval combined by other parameters
-    if (_interval)
+    if (_out_interval)
     {
-        std::cout << "      Start writing in the interval format." << std::endl;
+        std::cout << "      Start writing in the [interval] format." << std::endl;
         if (!ras_write_hap_to_interval_format(gen_num))
         {
             std::cout << "Error in reading and writing haplotypes!" << std::endl;
@@ -1094,7 +1081,7 @@ bool Simulation::ras_write_hap_to_plink_format(int gen_num)
             ras_convert_interval_to_format_plink(ipop, pops_hap, pops_legend, ichr, matrix_plink_ped, plink_ped_ids, plink_map);
             
             
-            // writing the hap
+            // writing the hap to plink
             std::cout << "      writing" << std::endl << std::flush;
             std::string outfile_name=_out_prefix +".pop"+ std::to_string(ipop+1) + ".gen" + std::to_string(gen_num)+".chr"+ std::to_string(_all_active_chrs[ichr]);
             format_plink::write_ped_map(outfile_name, matrix_plink_ped, plink_ped_ids, plink_map);
@@ -1625,19 +1612,19 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
         return false;
     }
     
-    // remove extra inds randomly
+    // remove extra inds randomly, otherwise all the first inds will marry (coused less AM variance!)
     if(num_males_mate>num_females_mate)
     {
         std::random_shuffle(pos_male_marriageable.begin(),pos_male_marriageable.end());
         int n_remove=num_males_mate-num_females_mate;
-        // erase the first n_remove elements:
+        // erase the first n_remove elements, after shuffling them:
         pos_male_marriageable.erase(pos_male_marriageable.begin(),pos_male_marriageable.begin()+n_remove);
     }
     else if(num_males_mate<num_females_mate)
     {
         std::random_shuffle(pos_female_marriageable.begin(),pos_female_marriageable.end());
         int n_remove=num_females_mate-num_males_mate;
-        // erase the first n_remove elements:
+        // erase the first n_remove elements, after shuffling them:
         pos_female_marriageable.erase(pos_female_marriageable.begin(),pos_female_marriageable.begin()+n_remove);
     }
     
@@ -1665,7 +1652,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     std::vector<double> t2(template_AM_dist.size());
     for (unsigned long int i=0; i<template_AM_dist.size(); i++) t2[i]=template_AM_dist[i][1];
     
-    std::cout << "        cor(mates)        = " << CommFunc::cor(t1,t2) << std::endl;
+    //std::cout << "        cor(mates)        = " << CommFunc::cor(t1,t2) << std::endl;
     
     std::vector<unsigned long int> rank_template_males = CommFunc::ras_rank(t1); // smallets one has rank 0, ...
     std::vector<unsigned long int> rank_template_females = CommFunc::ras_rank(t2);

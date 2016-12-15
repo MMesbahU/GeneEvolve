@@ -1,5 +1,5 @@
 # Name of your executable, replace sampleProgram with your program name
-EXE=GeneEvolve
+EXE=GeneEvolve$VERSION
 OPTFLAG_OPT = -O4 -std=c++0x
 OPTFLAG_DEBUG = -ggdb -O0
 ########################

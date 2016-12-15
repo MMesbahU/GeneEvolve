@@ -37,9 +37,10 @@ public:
     //_tot_gen rows, _n_pop^2 cols: each column is the the elements of the transition matrix in format: [a11 a12 a13 ... a21 a22 a23 ...]
     std::vector<std::vector<double> > migration_mat_gen;
     std::string _out_prefix;
-    std::string _format_output;
     bool _output_all_generations;
-    bool _interval;
+    bool _out_hap;
+    bool _out_plink;
+    bool _out_interval;
     std::vector<int> _all_active_chrs;
     // for Fprime NewtonRaphson
     //typedef double (Simulation::*function_1d)(double); // function_1d is a pointer to a double f(double) function
