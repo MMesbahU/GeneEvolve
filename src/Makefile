@@ -1,5 +1,5 @@
 # Name of your executable, replace sampleProgram with your program name
-EXE=GeneEvolve$VERSION
+EXE=GeneEvolve_$(VERSION)
 OPTFLAG_OPT = -O4 -std=c++0x
 OPTFLAG_DEBUG = -ggdb -O0
 ########################
@@ -65,7 +65,7 @@ both: opt openmp
 all: opt openmp debug profile
 
 # Handle openmp
-OMP_EXE:=GeneEvolve-omp
+OMP_EXE:=GeneEvolve_$(VERSION)-omp
 OBJDIR_OMP := $(OBJDIR)/omp
 OBJECTS_OMP := $(patsubst %,$(OBJDIR_OMP)/%,$(TOOLOBJ))
 
