@@ -13,6 +13,7 @@ Or, you can type the following commands in the terminal:
     git clone https://github.com/rtahmasbi/GeneEvolve
     cd GeneEvolve
     
+    
 Or,
 
     wget https://github.com/rtahmasbi/GeneEvolve/archive/master.zip
