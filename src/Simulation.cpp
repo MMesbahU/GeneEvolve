@@ -7,6 +7,11 @@
 
 
 
+int myrandom (int i)
+{
+    return std::rand()%i;
+}
+
 
 unsigned Simulation::ras_glob_seed(void)
 {
@@ -1668,6 +1673,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     
     //marry the males and females according to the assortative mating coefficient earlier inputed
     std::vector<Couples_Info> couples_info(n_couples2);
+    std::vector<unsigned long int> pos_couple_can_marry;
     
     unsigned long int n_inbreed=0;
     for (unsigned long int i=0; i<n_couples2; i++)
@@ -1701,7 +1707,10 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
             if (inbreeding) n_inbreed++;
         }
         else
+        {
             couples_info[i].inbreed=false; // can marry
+            pos_couple_can_marry.push_back(i);
+        }
     }
     
     //num_offspring distribution
@@ -1716,10 +1725,20 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     }
     else if (population[ipop]._offspring_dist[gen_ind]=="f" || population[ipop]._offspring_dist[gen_ind]=="F") // fixed distribution
     {
-        int nf=round((double)population[ipop]._pop_size[gen_ind]/(n_couples2-n_inbreed));
+        int nf=floor((double)population[ipop]._pop_size[gen_ind]/(n_couples2-n_inbreed));
         for (unsigned long int i=0; i<n_couples2; i++)
         {
             couples_info[i].num_offspring=nf;
+        }
+        // randolmy add the remaining children to couples
+        unsigned long int n_child_remain=population[ipop]._pop_size[gen_ind]-nf*(n_couples2-n_inbreed);
+        //unsigned seed = ras_glob_seed(); //we dont need, because at the begining we called it
+        //srand(seed);
+        // sort randomly
+        std::random_shuffle(pos_couple_can_marry.begin(), pos_couple_can_marry.end(), myrandom);
+        for (unsigned long int i=0; i<n_child_remain; i++)
+        {
+            couples_info[pos_couple_can_marry[i]].num_offspring++;
         }
     }
     
