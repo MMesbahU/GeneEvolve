@@ -610,8 +610,8 @@ bool parameter_print(Parameters &par)
     std::cout << "      --out_hap                : [" << (par._out_hap ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_plink              : [" << (par._out_plink ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_interval           : [" << (par._out_interval ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --output_all_generations : [" << (par.file_output_generations ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --file_output_generations : [" << par.file_output_generations << "]" << std::endl;
+    std::cout << "      --output_all_generations : [" << (par.output_all_generations ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --file_output_generations: [" << par.file_output_generations << "]" << std::endl;
     std::cout << std::endl;
     return true;
 }

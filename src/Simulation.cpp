@@ -2849,7 +2849,6 @@ void Simulation::process_mem_usage(double& vm_usage, double& resident_set)
 // each line is generation number (starting from 1)
 bool Simulation::read_file_output_generation_list(void)
 {
-    char sep=' ';
     std::string file_name=par.file_output_generations;
     std::ifstream ifile(file_name.c_str());
     if(!ifile)
@@ -2857,6 +2856,8 @@ bool Simulation::read_file_output_generation_list(void)
         std::cout << "Error: can not open file [" + file_name + "] to read." << std::endl;
         return false;
     }
+    
+    std::string line;
     
     while (getline(ifile, line)){
         _file_output_generations_list.push_back(std::stod(line)); // 1-based index

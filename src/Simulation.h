@@ -123,7 +123,7 @@ private:
     unsigned ras_glob_seed(void);
 
     // output generations
-    bool read_file_output_generation_list(void)
+    bool read_file_output_generation_list(void);
 
 public:
     bool run(void);
