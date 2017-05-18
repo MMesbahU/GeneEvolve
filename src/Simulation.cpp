@@ -125,7 +125,10 @@ bool Simulation::run(void)
     
 
     // read the hap file and write the output for the last generation
-    if (!par.output_all_generations)
+    std::vector<int>::iterator it = std::find(_file_output_generations_list.begin(), _file_output_generations_list.end(), _tot_gen);
+    bool last_gen_is_in_list=(it != _file_output_generations_list.end());
+        
+    if (!par.output_all_generations && !last_gen_is_in_list)
     {
         time_prev = time(0);
         std::cout << " ------------------------------------------------------------------------------" << std::endl;
@@ -223,9 +226,11 @@ bool Simulation::ras_init_parameters(void)
         int nl=population[ipop].ras_read_hap_legend_sample_address_name(par.file_hap_name[ipop]);
         int nchr=population[ipop]._hap_legend_sample_name.size();
         population[ipop]._nchr=nchr;
+        
+        // ToDo: nl is always equal to nchr, double check it and remove the following lines
         if(nl!=nchr)
         {
-            std::cout << "Error: Number of chromosomes is not equal to the input file." << std::endl;
+            std::cout << "Error: Number of chromosomes is not equal in the input file." << std::endl;
             return false;
         }
         std::cout << "     Number of chromosomes            = " << nchr << std::endl;
@@ -311,6 +316,12 @@ bool Simulation::ras_init_parameters(void)
             int ncv_hapfile = population[ipop].ras_read_cvs_address_name(par.file_cvs[ipop][iphen],iphen);
             std::cout << "       Number of CV hap files         = " << ncv_hapfile << std::endl;
             if (ncv_hapfile==0) return false;
+            if (nchr!=ncv_hapfile)
+            {
+                std::cout << "Error: in number of chromosomes (" << nchr << ") and number of CV hap files (" << ncv_hapfile << ")." << std::endl;
+                std::cout << "       Please check the file in --file_hap_name [file]." << std::endl;
+                return false;
+            }
 
             ///////////////////////////
             //loads the CVs for all chrs
@@ -419,6 +430,18 @@ bool Simulation::ras_init_parameters(void)
             return false;
         }
     }
+    
+    _file_output_generations_list.clear();
+    if (par.file_output_generations.size()>0)
+    {
+        if (!read_file_output_generation_list())
+        {
+            return false;
+        }
+        if (_debug)
+            std::cout << " read the file_output_generations with " << _file_output_generations_list.size() << " rows." << std::endl;
+    }
+
     
     _all_active_chrs=population[0]._all_active_chrs;
     // todo: check they are equal for all the populations
@@ -1445,7 +1468,12 @@ bool Simulation::sim_next_generation(int gen_num)
     
     ///////////////////////////////////////////////////////
     //save genotypes
+    std::vector<int>::iterator it = std::find (_file_output_generations_list.begin(), _file_output_generations_list.end(), gen_num);
     if(_output_all_generations) // for all generations
+    {
+        ras_save_genotypes(gen_num);
+    }
+    else if (it != _file_output_generations_list.end()) // write some generations
     {
         ras_save_genotypes(gen_num);
     }
@@ -2489,6 +2517,7 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
     //double m_bv=CommFunc::mean(bv);
     
     // sd parental effect
+    // we will not scale parental effect
     double s_par_eff=0;
     if (population[ipop]._pheno_scheme[iphen]._vf>0)
         s_par_eff=std::sqrt(CommFunc::var(par_eff) / population[ipop]._pheno_scheme[iphen]._vf);
@@ -2522,7 +2551,7 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
         population[ipop].h[i].bv[iphen] = population[ipop].h[i].additive[iphen]+population[ipop].h[i].dominance[iphen];
         // scaling F
         if (s_par_eff>0)
-            population[ipop].h[i].parental_effect[iphen] = par_eff[i]; // /s_par_eff; // for gen0 _Pop_info_prev_gen[ipop] is 0
+            population[ipop].h[i].parental_effect[iphen] = par_eff[i];
         else
             population[ipop].h[i].parental_effect[iphen] = 0;
         
@@ -2814,5 +2843,25 @@ void Simulation::process_mem_usage(double& vm_usage, double& resident_set)
     resident_set = rss * page_size_kb / 1024.0;
 }
 
+
+
+// this file has no header
+// each line is generation number (starting from 1)
+bool Simulation::read_file_output_generation_list(void)
+{
+    char sep=' ';
+    std::string file_name=par.file_output_generations;
+    std::ifstream ifile(file_name.c_str());
+    if(!ifile)
+    {
+        std::cout << "Error: can not open file [" + file_name + "] to read." << std::endl;
+        return false;
+    }
+    
+    while (getline(ifile, line)){
+        _file_output_generations_list.push_back(std::stod(line)); // 1-based index
+    }
+    return true;
+}
 
 

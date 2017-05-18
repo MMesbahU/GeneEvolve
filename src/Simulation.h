@@ -38,6 +38,7 @@ public:
     std::vector<std::vector<double> > migration_mat_gen;
     std::string _out_prefix;
     bool _output_all_generations;
+    std::vector<int> _file_output_generations_list; // 0-based list of generation for genotype outputs
     bool _out_hap;
     bool _out_plink;
     bool _out_interval;
@@ -121,6 +122,8 @@ private:
     std::default_random_engine glob_generator;
     unsigned ras_glob_seed(void);
 
+    // output generations
+    bool read_file_output_generation_list(void)
 
 public:
     bool run(void);

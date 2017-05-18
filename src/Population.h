@@ -270,6 +270,7 @@ public:
     bool _out_plink;
     bool _out_interval;
     bool output_all_generations;
+    std::string file_output_generations;
     
     // default values
     Parameters(void)
@@ -283,6 +284,7 @@ public:
         help=false;
         debug=false;
         file_migration="";
+        file_output_generations="";
     }
     void init(int npop)
     {
@@ -314,7 +316,8 @@ public:
         _lambda.resize(npop);
         _MM_percent.resize(npop,0);
         _RM.resize(npop,false);
-
+        file_output_generations="";
+        
         // we can not set _gamma.resize(npheno,0), because _gamma.size=npheno
         //_gamma.resize(npheno,0); // for each phenotype and all populations
     }

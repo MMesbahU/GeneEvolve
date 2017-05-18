@@ -187,6 +187,8 @@ void helpFile()
     printf("        --out_plink              : [Off]  ->  [On] means output in the [plink] format.\n");
     printf("        --out_interval           : [Off]  ->  [On] means output in the [interval] format.\n");
     printf("        --output_all_generations : [Off]\n");
+    printf("        --file_output_generations: [filename]\n");
+    printf("          A file contating the list of the generations for genotype output. Each generation number should be in a line.\n");
     
 
     printf("\n Please visit <https://github.com/rtahmasbi/GeneEvolve> for detailed documentation.\n\n");
@@ -305,6 +307,9 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
         }
         else if(vec_arg[i]=="--output_all_generations"){
             par.output_all_generations=true;
+        }
+        else if(vec_arg[i]=="--file_output_generations"){
+            par.file_output_generations=vec_arg[++i];
         }
         //=====================================================================
         // --help
@@ -605,7 +610,8 @@ bool parameter_print(Parameters &par)
     std::cout << "      --out_hap                : [" << (par._out_hap ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_plink              : [" << (par._out_plink ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_interval           : [" << (par._out_interval ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --output_all_generations : [" << (par.output_all_generations ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --output_all_generations : [" << (par.file_output_generations ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --file_output_generations : [" << par.file_output_generations << "]" << std::endl;
     std::cout << std::endl;
     return true;
 }

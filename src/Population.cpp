@@ -167,7 +167,7 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
     
     if(CommFunc::ras_FileColNumber(file_name," ") != file_ncol)
     {
-       std:: cout << "Error: file ["+ file_name +"] should have " << file_ncol << " columns." << std::endl;
+       std::cout << "Error: file ["+ file_name +"] should have " << file_ncol << " columns." << std::endl;
        return 0;
     }
     
@@ -192,7 +192,7 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
         if (j>=0)
         {
             std::getline(iss, token, sep);
-            bp=std::stod(token); // it shopuld be stod and not stol, because in the input file we may have 1.2e+4
+            bp=std::stod(token); // it should be stod and not stol, because in the input file we may have 1.2e+4
             std::getline(iss, token, sep);
             genetic_value_a=std::stod(token);
             std::getline(iss, token, sep);
@@ -201,6 +201,11 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
             _pheno_scheme[iphen]._cv_info[j].bp.push_back(bp);
             _pheno_scheme[iphen]._cv_info[j].genetic_value_a.push_back(genetic_value_a);
             _pheno_scheme[iphen]._cv_info[j].genetic_value_d.push_back(genetic_value_d);
+        }
+        else
+        {
+            std::cout << "Error:  In file ["+ file_name +"]. Chromosome [" << chr << "] is not defined in the --file_hap_name [file]." << std::endl;
+            return 0;
         }
         
         i++;
