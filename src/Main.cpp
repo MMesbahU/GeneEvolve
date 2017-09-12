@@ -148,6 +148,7 @@ void helpFile()
     printf("        --file_gen_info          : [filename]\n");
     printf("          File containing information about generations, each line represent one generation.\n");
     printf("        --file_hap_name          : [filename]\n");
+    printf("        --file_ref_vcf           : [filename]\n");
     printf("        --file_recom_map         : [filename]\n");
     printf("        --file_mutation_map      : [filename]\n");
     printf("        --RM                     : [off]  ->  Random Mating\n");
@@ -185,6 +186,7 @@ void helpFile()
     printf("        --prefix                 : [out]\n");
     printf("        --out_hap                : [ON]   ->  [On] means output in the [hap] format.\n");
     printf("        --out_plink              : [Off]  ->  [On] means output in the [plink] format.\n");
+    printf("        --out_vcf                : [Off]  ->  [On] means output in the [vcf] format.\n");
     printf("        --out_interval           : [Off]  ->  [On] means output in the [interval] format.\n");
     printf("        --output_all_generations : [Off]\n");
     printf("        --file_output_generations: [filename]\n");
@@ -224,6 +226,9 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
         }
         else if(vec_arg[i]=="--file_hap_name"){
             par.file_hap_name[ipop]=vec_arg[++i];
+        }
+        else if(vec_arg[i]=="--file_ref_vcf"){
+            par.file_ref_vcf[ipop]=vec_arg[++i];
         }
         else if(vec_arg[i]=="--file_recom_map"){
             par.file_recom_map[ipop]=vec_arg[++i];
@@ -301,6 +306,9 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
         }
         else if(vec_arg[i]=="--out_plink"){
             par._out_plink=true;
+        }
+        else if(vec_arg[i]=="--out_vcf"){
+            par._out_vcf=true;
         }
         else if(vec_arg[i]=="--out_interval"){
             par._out_interval=true;
@@ -405,9 +413,9 @@ bool parameter_check(Parameters &par)
             std::cout << "Error: missing parameter [--file_gen_info] in population " << ipop+1 << "." << std::endl;
             return false;
         }
-        if (par.file_hap_name[ipop].size()==0)
+        if (par.file_hap_name[ipop].size()==0 && par.file_ref_vcf[ipop].size()==0)
         {
-            std::cout << "Error: missing parameter [--file_hap_name] in population " << ipop+1 << "." << std::endl;
+            std::cout << "Error: missing the reference file. Check the parameter [--file_hap_name] or [--file_ref_vcf] in population " << ipop+1 << "." << std::endl;
             return false;
         }
         if (par.file_recom_map[ipop].size()==0)
@@ -570,6 +578,7 @@ bool parameter_print(Parameters &par)
         std::cout << "  Population " << ipop+1 << ":" << std::endl;
         std::cout << "      --file_gen_info          : [" << par.file_gen_info[ipop] << "]" << std::endl;
         std::cout << "      --file_hap_name          : [" << par.file_hap_name[ipop] << "]" << std::endl;
+        std::cout << "      --file_ref_vcf           : [" << par.file_ref_vcf[ipop] << "]" << std::endl;
         std::cout << "      --file_recom_map         : [" << par.file_recom_map[ipop] << "]" << std::endl;
         std::cout << "      --file_mutation_map      : [" << par.file_mutation_map[ipop] << "]" << std::endl;
         std::cout << "      --MM                     : [" << par._MM_percent[ipop] << "]" << std::endl;
@@ -609,9 +618,10 @@ bool parameter_print(Parameters &par)
     std::cout << "      --prefix                 : [" << par.prefix << "]" << std::endl;
     std::cout << "      --out_hap                : [" << (par._out_hap ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_plink              : [" << (par._out_plink ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --out_vcf                : [" << (par._out_vcf ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_interval           : [" << (par._out_interval ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --output_all_generations : [" << (par.output_all_generations ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --file_output_generations: [" << par.file_output_generations << "]" << std::endl;
+    std::cout << "      --file_output_generations : [" << par.file_output_generations << "]" << std::endl;
     std::cout << std::endl;
     return true;
 }

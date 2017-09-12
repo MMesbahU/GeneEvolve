@@ -8,6 +8,7 @@
 #include "RasRandomNumber.h"
 #include "format_hap.h" // to convert to .hap, .sample .legend file
 #include "format_plink.h" // to convert to plink file format
+#include "format_vcf.h" // to convert to vcf
 
 
 #ifdef _OPENMP
@@ -238,6 +239,7 @@ public:
     // pupulations information
     std::vector<std::string> file_gen_info;               // for each population
     std::vector<std::string> file_hap_name;               // for each population
+    std::vector<std::string> file_ref_vcf;               // for each population
     std::vector<std::string> file_recom_map;              // for each population
     std::vector<std::string> file_mutation_map;           // for each population
     std::vector<std::vector<std::string> > file_cv_info;  // for each population and each phenotype
@@ -268,6 +270,7 @@ public:
     std::string prefix;
     bool _out_hap;
     bool _out_plink;
+    bool _out_vcf;
     bool _out_interval;
     bool output_all_generations;
     std::string file_output_generations;
@@ -302,6 +305,7 @@ public:
 
         file_gen_info.resize(npop);
         file_hap_name.resize(npop);
+        file_ref_vcf.resize(npop);
         file_recom_map.resize(npop);
         file_mutation_map.resize(npop);
         file_cv_info.resize(npop);
@@ -340,6 +344,7 @@ public:
     std::vector<double> _selection_func_par1; // for each generation
     std::vector<double> _selection_func_par2; // for each generation
     std::vector<std::vector<std::string> > _hap_legend_sample_name; // for each chr, with 3 columns (hap,legend,sample)
+    std::vector<std::string> _ref_vcf_address; // for each chr, with one column
     std::vector<rMap> _rmap;                                        // for each chr
     std::vector<MutationMap> _mutation_map;                         // for each chr
     std::vector<std::vector<double> > _recom_prob;                  // for each chr
@@ -350,6 +355,7 @@ public:
     bool _avoid_inbreeding;
     bool _out_hap;
     bool _out_plink;
+    bool _out_vcf;
     bool _out_interval;// for generating interval output
     bool _output_all_generations;
     bool _debug;
@@ -376,6 +382,7 @@ private:
 public:
     int ras_read_generation_info_file(std::string file_gen_info);
     int ras_read_hap_legend_sample_address_name(std::string f_name);
+    int ras_read_file_ref_vcf_address(std::string f_name);
     int ras_read_cv_info(std::string f_name, int iphen); // for each phenotype
     int ras_read_cv_info_dominace_model_file(std::string f_name, int iphen);
     int ras_read_cvs_address_name(std::string f_name, int iphen); // for each phenotype

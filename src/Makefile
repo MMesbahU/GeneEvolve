@@ -1,5 +1,6 @@
 # Name of your executable, replace sampleProgram with your program name
-EXE=GeneEvolve_$(VERSION)
+my_date=$(shell date +%Y%m%d)
+EXE=GeneEvolve_$(my_date)
 OPTFLAG_OPT = -O4 -std=c++0x
 OPTFLAG_DEBUG = -ggdb -O0
 ########################
@@ -8,7 +9,7 @@ OPTFLAG_DEBUG = -ggdb -O0
 # Example if you have Class1.cpp, Class1.h, Class2.cpp, and Class2.cpp, specify:
 # TOOLBASE = Class1 Class2
 
-TOOLBASE = Simulation Population CommFunc RasRandomNumber RasMatrix format_hap format_plink
+TOOLBASE = Simulation Population CommFunc RasRandomNumber RasMatrix format_hap format_plink format_vcf
 
 # SRCONLY - .cpp only files.  Specify the entire name, including the .cpp.
 # Example, if you have Main.cpp, and File1.cpp, specify:
@@ -65,9 +66,11 @@ both: opt openmp
 all: opt openmp debug profile
 
 # Handle openmp
-OMP_EXE:=GeneEvolve_$(VERSION)-omp
+OMP_EXE:=GeneEvolve_$(my_date)-omp
 OBJDIR_OMP := $(OBJDIR)/omp
 OBJECTS_OMP := $(patsubst %,$(OBJDIR_OMP)/%,$(TOOLOBJ))
+
+
 
 openmp: USER_COMPILE_VARS = -fopenmp -DDATE="\"${DATE}\"" -DUSER="\"${USER}\""
 openmp: $(BINDIR_OPT)/$(OMP_EXE)
@@ -90,3 +93,6 @@ $(OBJDIR_OMP)/%.o: %.cpp
 
 ########################
 # Add any additional targets here.
+
+
+

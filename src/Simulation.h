@@ -42,6 +42,7 @@ public:
     bool _out_hap;
     bool _out_plink;
     bool _out_interval;
+    bool _out_vcf;
     std::vector<int> _all_active_chrs;
     // for Fprime NewtonRaphson
     //typedef double (Simulation::*function_1d)(double); // function_1d is a pointer to a double f(double) function
@@ -105,6 +106,12 @@ private:
     // dealing with interval (.int) file
     bool ras_write_hap_to_interval_format(int gen_num);
     
+    
+    // dealing with vcf files
+    bool ras_write_vcf_to_vcf_format(int gen_num);
+    bool ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr);
+    bool ras_read_vcf_pops_chr(std::vector<vcf_structure> &vcf_structure_pops, int ichr);
+
     
 
     bool ras_compute_mating_value_selection_value(int gen_num, int ipop);

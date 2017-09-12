@@ -49,6 +49,11 @@ int Population::ras_read_generation_info_file(std::string file_gen_info)
         double selection_func_p2;
 
         std::getline(iss, token, sep); // pop_size
+        if (token.size()<1)
+        {
+            std::cout << "Error: Line " << ngen+1 << " in file ["+ file_name +"] has no population size." << std::endl;
+            return 0;
+        }
         ps=std::stod(token); // it should be stod for 3e+05
         std::getline(iss, token, sep); //mate_corr
         mc=std::stod(token);
@@ -94,7 +99,7 @@ int Population::ras_read_generation_info_file(std::string file_gen_info)
 // this file has header
 // f_name is a space dilimited file with 4 columns: chr file.hap file.legend fiel.sample
 // each row is a chromosome
-// output: npop
+// output: nchr
 int Population::ras_read_hap_legend_sample_address_name(std::string f_name)
 {
     std::string sep=" ";
@@ -136,6 +141,47 @@ int Population::ras_read_hap_legend_sample_address_name(std::string f_name)
     return i; // number of lines read
 }
 
+
+// this file has header
+// f_name is a space dilimited file with 2 columns: chr file$chr.vcf
+// each row is a chromosome
+// output: nchr
+int Population::ras_read_file_ref_vcf_address(std::string f_name)
+{
+    std::string sep=" ";
+    
+    _ref_vcf_address.clear();
+    std::string file_name=f_name;
+    std::ifstream ifile(file_name.c_str());
+    
+    if(!ifile)
+    {
+        std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
+        return 0;
+    }
+    
+    std::vector<std::string> st1;
+    
+    std::string line;
+    int i=0;
+    
+    // discard first line which is heder
+    std::getline(ifile, line);
+    //cout << endl;
+    _all_active_chrs.clear();
+    while (std::getline(ifile, line)){
+        std::istringstream iss(line);
+        int chr;
+        iss >> chr;
+        _all_active_chrs.push_back(chr);
+        std::string c_vcf;
+        iss >> c_vcf;
+        _ref_vcf_address.push_back(c_vcf);
+        i++;
+    }
+    
+    return i; // number of lines read
+}
 
 
 

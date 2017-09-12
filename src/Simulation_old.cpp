@@ -4,14 +4,8 @@
 #include "CommFunc.h"
 #include "RasRandomNumber.h"
 #include <unistd.h> // for sysconf
-//#include "format_vcf.h"
 
 
-
-int myrandom (int i)
-{
-    return std::rand()%i;
-}
 
 
 unsigned Simulation::ras_glob_seed(void)
@@ -126,10 +120,7 @@ bool Simulation::run(void)
     
 
     // read the hap file and write the output for the last generation
-    std::vector<int>::iterator it = std::find(_file_output_generations_list.begin(), _file_output_generations_list.end(), _tot_gen);
-    bool last_gen_is_in_list=(it != _file_output_generations_list.end());
-        
-    if (!par.output_all_generations && !last_gen_is_in_list)
+    if (!par.output_all_generations)
     {
         time_prev = time(0);
         std::cout << " ------------------------------------------------------------------------------" << std::endl;
@@ -166,7 +157,6 @@ bool Simulation::ras_init_parameters(void)
     _debug=par.debug;
     _out_hap=par._out_hap;
     _out_plink=par._out_plink;
-    _out_vcf=par._out_vcf;
     _out_interval=par._out_interval;
     
     
@@ -184,7 +174,6 @@ bool Simulation::ras_init_parameters(void)
         population[ipop]._avoid_inbreeding=par.avoid_inbreeding;
         population[ipop]._out_hap=par._out_hap; // for hap output
         population[ipop]._out_plink=par._out_plink; // for plink output
-        population[ipop]._out_vcf=par._out_vcf; // for vcf output
         population[ipop]._out_interval=par._out_interval; // for interval output
         population[ipop]._output_all_generations=par.output_all_generations;
         population[ipop]._debug=par.debug;
@@ -226,24 +215,12 @@ bool Simulation::ras_init_parameters(void)
         
         ///////////////////////////
         //Number of chromosomes
-        int nl=0;
-        int nchr=0;
-        if (par.file_hap_name[ipop].size()>0)
-        {
-            nl=population[ipop].ras_read_hap_legend_sample_address_name(par.file_hap_name[ipop]);
-            nchr=population[ipop]._hap_legend_sample_name.size();
-        }
-        if (par.file_ref_vcf[ipop].size()>0)
-        {
-            nl=population[ipop].ras_read_file_ref_vcf_address(par.file_ref_vcf[ipop]);
-            nchr=population[ipop]._ref_vcf_address.size();
-        }
+        int nl=population[ipop].ras_read_hap_legend_sample_address_name(par.file_hap_name[ipop]);
+        int nchr=population[ipop]._hap_legend_sample_name.size();
         population[ipop]._nchr=nchr;
-        
-        // ToDo: nl is always equal to nchr, double check it and remove the following lines
         if(nl!=nchr)
         {
-            std::cout << "Error: Number of chromosomes is not equal in the input file." << std::endl;
+            std::cout << "Error: Number of chromosomes is not equal to the input file." << std::endl;
             return false;
         }
         std::cout << "     Number of chromosomes            = " << nchr << std::endl;
@@ -251,33 +228,30 @@ bool Simulation::ras_init_parameters(void)
         
         ///////////////////////////
         // check the number of individuals in .invd and .hap file
-        if (population[ipop]._hap_legend_sample_name.size()>0)
+        std::vector<unsigned long int> n_ind(nchr,0);
+        for (int ichr=0; ichr<nchr; ichr++)
         {
-            std::vector<unsigned long int> n_ind(nchr,0);
-            for (int ichr=0; ichr<nchr; ichr++)
-            {
-                std::string f_hap = population[ipop]._hap_legend_sample_name[ichr][0];
-                std::string f_indv = population[ipop]._hap_legend_sample_name[ichr][2];
-                unsigned long int hap_ncol = CommFunc::ras_FileColNumber(f_hap, " "); // 2*nind
-                unsigned long int indv_nrow = CommFunc::ras_FileLineNumber(f_indv); // nind
-                if (indv_nrow*2==hap_ncol)
+            std::string f_hap = population[ipop]._hap_legend_sample_name[ichr][0];
+            std::string f_indv = population[ipop]._hap_legend_sample_name[ichr][2];
+            unsigned long int hap_ncol = CommFunc::ras_FileColNumber(f_hap, " "); // 2*nind
+            unsigned long int indv_nrow = CommFunc::ras_FileLineNumber(f_indv); // nind
+            if (indv_nrow*2==hap_ncol)
                 n_ind[ichr]=indv_nrow;
-                else
-                {
-                    std::cout << "Error: Number of individuals are not equal in files [" << f_hap << "] and [" << f_indv << "]." << std::endl;
-                    return false;
-                }
-            }
-            for (int ichr=0; ichr<nchr; ichr++)
+            else
             {
-                if(n_ind[ichr]!=n_ind[0])
-                {
-                    std::cout << "Error: Number of individuals are not equal in different chromosomes." << std::endl;
-                    return false;
-                }
+                std::cout << "Error: Number of individuals are not equal in files [" << f_hap << "] and [" << f_indv << "]." << std::endl;
+                return false;
             }
-            std::cout << "     Number of individuals            = " << n_ind[0] << std::endl;
         }
+        for (int ichr=0; ichr<nchr; ichr++)
+        {
+            if(n_ind[ichr]!=n_ind[0])
+            {
+                std::cout << "Error: Number of individuals are not equal in different chromosomes." << std::endl;
+                return false;
+            }
+        }
+        std::cout << "     Number of individuals            = " << n_ind[0] << std::endl;
 
         
 
@@ -332,12 +306,6 @@ bool Simulation::ras_init_parameters(void)
             int ncv_hapfile = population[ipop].ras_read_cvs_address_name(par.file_cvs[ipop][iphen],iphen);
             std::cout << "       Number of CV hap files         = " << ncv_hapfile << std::endl;
             if (ncv_hapfile==0) return false;
-            if (nchr!=ncv_hapfile)
-            {
-                std::cout << "Error: in number of chromosomes (" << nchr << ") and number of CV hap files (" << ncv_hapfile << ")." << std::endl;
-                std::cout << "       Please check the file in --file_hap_name [file]." << std::endl;
-                return false;
-            }
 
             ///////////////////////////
             //loads the CVs for all chrs
@@ -354,30 +322,27 @@ bool Simulation::ras_init_parameters(void)
             }
             
             // check CVs
-            if(population[ipop]._hap_legend_sample_name.size()>0)
+            for (int ichr=0; ichr<nchr; ichr++)
             {
-                for (int ichr=0; ichr<nchr; ichr++)
+                // check the number of CVs
+                int ncv_inchr_v1 = population[ipop]._pheno_scheme[iphen]._cv_info[ichr].bp.size();
+                int ncv_inchr_v2 = population[ipop]._pheno_scheme[iphen]._cvs[ichr].val[0].size();// num of cvs in hap0
+                if (ncv_inchr_v1 != ncv_inchr_v2)
                 {
-                    // check the number of CVs
-                    int ncv_inchr_v1 = population[ipop]._pheno_scheme[iphen]._cv_info[ichr].bp.size();
-                    int ncv_inchr_v2 = population[ipop]._pheno_scheme[iphen]._cvs[ichr].val[0].size();// num of cvs in hap0
-                    if (ncv_inchr_v1 != ncv_inchr_v2)
-                    {
-                        std::cout << "Error: Number of CVs in 'cv.hap' and 'cv.info' files are not equal." << std::endl;
-                        return false;
-                    }
-                    // check the number of inds
-                    unsigned long int nhap_inchr_v1 = population[ipop]._pheno_scheme[iphen]._cvs[ichr].val.size(); // nhaps
-                    std::string f_hap = population[ipop]._hap_legend_sample_name[ichr][0];
-                    unsigned long int nhap_inchr_v2 = CommFunc::ras_FileColNumber(f_hap, " "); // nhaps=2*nind
-                    if (nhap_inchr_v1 != nhap_inchr_v2)
-                    {
-                        std::cout << "Error: Number of individuals in cv.hap and [" << f_hap << "] files are not equal." << std::endl;
-                        return false;
-                    }
+                    std::cout << "Error: Number of CVs in 'cv.hap' and 'cv.info' files are not equal." << std::endl;
+                    return false;
+                }
+                // check the number of inds
+                unsigned long int nhap_inchr_v1 = population[ipop]._pheno_scheme[iphen]._cvs[ichr].val.size(); // nhaps
+                std::string f_hap = population[ipop]._hap_legend_sample_name[ichr][0];
+                unsigned long int nhap_inchr_v2 = CommFunc::ras_FileColNumber(f_hap, " "); // nhaps=2*nind
+                if (nhap_inchr_v1 != nhap_inchr_v2)
+                {
+                    std::cout << "Error: Number of individuals in cv.hap and [" << f_hap << "] files are not equal." << std::endl;
+                    return false;
                 }
             }
-        } // for each pheno
+        }
 
         ///////////////////////////
         //read ras_read_rmap
@@ -449,18 +414,6 @@ bool Simulation::ras_init_parameters(void)
             return false;
         }
     }
-    
-    _file_output_generations_list.clear();
-    if (par.file_output_generations.size()>0)
-    {
-        if (!read_file_output_generation_list())
-        {
-            return false;
-        }
-        if (_debug)
-            std::cout << " read the file_output_generations with " << _file_output_generations_list.size() << " rows." << std::endl;
-    }
-
     
     _all_active_chrs=population[0]._all_active_chrs;
     // todo: check they are equal for all the populations
@@ -941,16 +894,6 @@ bool Simulation::ras_save_genotypes(int gen_num)
             return false;
         }
     }
-    
-    if (_out_vcf)
-    {
-        std::cout << "      Start writing in the [vcf] format." << std::endl;
-        if (!ras_write_vcf_to_vcf_format(gen_num))
-        {
-            std::cout << "Error in reading and writing vcf files!" << std::endl;
-            return false;
-        }
-    }
 
     // interval combined by other parameters
     if (_out_interval)
@@ -970,17 +913,15 @@ bool Simulation::ras_save_genotypes(int gen_num)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////
-// read hap files for each chr and all populations
-// we should read all the populations because of migration
-// pops_legend.size = _n_pop
-// pops_hap.size = _n_pop
+// read hap files for each chr and pop
+
 bool Simulation::ras_read_hap_legend_sample_chr(std::vector<Legend> &pops_legend, std::vector<Hap_SNP> &pops_hap, int ichr)
 {
     for (int ipop=0; ipop<_n_pop; ipop++)
     {
         std::cout << "     --Population: " << (ipop+1) << std::endl;
         // reading sample file;
-        // note that .sample file has header, so -1
+        // note that .sample file has header file, so -1
         // but .impute.hap.indv has no header!!!!
         //long int nind=CommFunc::ras_FileLineNumber(file_in_name[ichr][2])-1; // sample_file
         long int nind=CommFunc::ras_FileLineNumber(population[ipop]._hap_legend_sample_name[ichr][2]); // .impute.hap.indv
@@ -1006,7 +947,9 @@ bool Simulation::ras_read_hap_legend_sample_chr(std::vector<Legend> &pops_legend
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
 // impute2: .hap .legend .sample
+
 bool Simulation::ras_write_hap_legend_sample(int gen_num)
 {
     int n_chr=population[0].h[0].chr.size();
@@ -1017,7 +960,7 @@ bool Simulation::ras_write_hap_legend_sample(int gen_num)
         std::cout << "       reading hap files" << std::endl << std::flush;
         std::vector<Legend> pops_legend(_n_pop); // the population's legend file
         std::vector<Hap_SNP> pops_hap(_n_pop); // the population's hap file
-        ras_read_hap_legend_sample_chr(pops_legend, pops_hap, ichr); // for all populations, because of migration
+        ras_read_hap_legend_sample_chr(pops_legend, pops_hap, ichr); // for all populations
         std::cout << "       done." << std::endl << std::flush;
         
         
@@ -1032,7 +975,7 @@ bool Simulation::ras_write_hap_legend_sample(int gen_num)
             
             // writing to the hap file
             std::cout << "      writing" << std::endl << std::flush;
-            std::string outfile_name = _out_prefix + ".pop" + std::to_string(ipop+1) + ".gen" + std::to_string(gen_num) + ".chr" + std::to_string(_all_active_chrs[ichr]);
+            std::string outfile_name = _out_prefix + ".pop"+std::to_string(ipop+1) + ".gen" + std::to_string(gen_num) + ".chr" + std::to_string(_all_active_chrs[ichr]);
             format_hap::write_hap(hap_snp, outfile_name);
             
             // writing to indv file
@@ -1140,7 +1083,7 @@ bool Simulation::ras_write_hap_to_plink_format(int gen_num)
             
             // writing the hap to plink
             std::cout << "      writing" << std::endl << std::flush;
-            std::string outfile_name=_out_prefix +".pop"+ std::to_string(ipop+1) + ".gen" + std::to_string(gen_num) + ".chr" +  std::to_string(_all_active_chrs[ichr]);
+            std::string outfile_name=_out_prefix +".pop"+ std::to_string(ipop+1) + ".gen" + std::to_string(gen_num)+".chr"+ std::to_string(_all_active_chrs[ichr]);
             format_plink::write_ped_map(outfile_name, matrix_plink_ped, plink_ped_ids, plink_map);
         }
         std::cout << "    --------------------------------------------------------------" << std::endl;
@@ -1327,153 +1270,7 @@ bool Simulation::ras_write_hap_to_interval_format(int gen_num)
 }
 
 
-
-
-///////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////
-// vcf
-bool Simulation::ras_write_vcf_to_vcf_format(int gen_num)
-{
-    int n_chr=population[0].h[0].chr.size();
-    for (int ichr=0; ichr<n_chr; ichr++) // for chr
-    {
-        // reading vcf files for all populations. Because of migration we should read all the pops
-        std::cout << "    Start chr " << _all_active_chrs[ichr] << std::endl << std::flush;
-        std::cout << "       reading vcf files ..." << std::endl << std::flush;
-        
-        std::vector<vcf_structure> vcf_structure_allpops_chr(_n_pop); // for all populations
-        // for all populations
-        if (!ras_read_vcf_pops_chr(vcf_structure_allpops_chr, ichr))
-        {
-            return false;
-        }
-        std::cout << "       done." << std::endl << std::flush;
-        
-        
-        //convert hap matrix to matrix_hap according to human interval information
-        for (int ipop=0; ipop<_n_pop; ipop++) // for pops
-        {
-            std::cout << "    --Population: " << (ipop+1) << std::endl;
-            
-            std::cout << "      converting interval format to vcf file structure ..." << std::endl << std::flush;
-            
-            vcf_structure vcf_out;
-            if(!ras_convert_interval_to_vcf_structure(vcf_out, ipop, ichr, vcf_structure_allpops_chr))
-                return false;
-            
-            // writing the hap to plink
-            std::cout << "      writing" << std::endl << std::flush;
-            std::string outfile_name=_out_prefix +".pop"+ std::to_string(ipop+1) + ".gen" + std::to_string(gen_num)+".chr"+ std::to_string(_all_active_chrs[ichr]) + ".vcf";
-            
-            if (!format_vcf::write_vcf_file(outfile_name, vcf_out))
-                return false;
-        }
-        std::cout << "    --------------------------------------------------------------" << std::endl;
-    }
-    return true;
-}
-
-
-/// for one chr in one population
-bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr)
-{
-    // convert hap0 matrix to matrix_hap according to Human interval information
-    unsigned long int n_human=population[ipop].h.size();
-    unsigned long int nsnp=vcf_structure_allpops_chr[ipop].ID.size();
-    std::cout << "      n_human=" << n_human << std::endl;
-    int n_chromatid = 2;
-    
-    std::cout << "      Allocating memory ..." << std::flush;
-    vcf_out.SAMPLES.resize(n_human);
-    // data = nhap*nsnp with 0=REF=false, 1=true=ALT. In C, 0 means false
-    vcf_out.data.resize(n_human*2, std::vector<bool> (nsnp) );
-    vcf_out.CHROM  = vcf_structure_allpops_chr[ipop].CHROM;
-    vcf_out.POS    = vcf_structure_allpops_chr[ipop].POS;
-    vcf_out.ID     = vcf_structure_allpops_chr[ipop].ID;
-    vcf_out.REF    = vcf_structure_allpops_chr[ipop].REF;
-    vcf_out.ALT    = vcf_structure_allpops_chr[ipop].ALT;
-    vcf_out.QUAL   = vcf_structure_allpops_chr[ipop].QUAL;
-    vcf_out.FILTER = std::vector<std::string> (nsnp,".");
-    vcf_out.INFO   = std::vector<std::string> (nsnp,".");
-    vcf_out.FORMAT = std::vector<std::string> (nsnp,"GT");
-    std::cout << "      done." << std::endl;
-    
-    
-    std::vector<std::string> hline;
-    hline.push_back("##fileformat=VCFv4.1");
-    std::time_t t = std::time(NULL);
-    char mbstr[100];
-    std::strftime(mbstr, sizeof(mbstr), "%Y%m%d", std::localtime(&t));
-    hline.push_back("##CreatedBy=GeneEvolve");
-    hline.push_back("##fileDate=" + std::string(mbstr));
-    hline.push_back("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
-    vcf_out.meta_lines = hline;
-
-    
-    for (unsigned long int ih=0; ih<n_human; ih++) // for humans
-    {
-        vcf_out.SAMPLES[ih] = "h" + std::to_string(population[ipop].h[ih].ID);
-        for (int ihaps=0; ihaps<n_chromatid; ihaps++) // for haps, 2
-        {
-            int n_parts=(int)population[ipop].h[ih].chr[ichr].Hap[ihaps].size();
-            for (int ip=0; ip<n_parts; ip++) // for parts
-            {
-                part p=population[ipop].h[ih].chr[ichr].Hap[ihaps][ip];
-                int root_pop=p.root_population;
-                for (unsigned long int ii=0; ii<nsnp; ii++) // for all SNPs
-                {
-                    if (p.check_interval(vcf_structure_allpops_chr[root_pop].POS[ii]))
-                    {
-                        if (p.hap_index >= vcf_structure_allpops_chr[root_pop].data.size())// nhaps
-                        {
-                            std::cout << "Error: p.hap_index=" << p.hap_index << " is not in range, ih=" << ih << std::endl;
-                            return false;
-                        }
-                        // check mutation
-                        std::vector<unsigned long int>::iterator it = find(p.mutation_pos.begin(), p.mutation_pos.end(), vcf_structure_allpops_chr[root_pop].POS[ii]);
-                        if (it != p.mutation_pos.end()) // mutation
-                            vcf_out.data[2*ih+ihaps][ii] = !vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
-                        else // no mutation
-                            vcf_out.data[2*ih+ihaps][ii] = vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
-                        
-                    }
-                }
-            }
-        }
-    }
-    return true;
-}
-
-
-
-
-// read vcf file for each chr and pop
-bool Simulation::ras_read_vcf_pops_chr(std::vector<vcf_structure> &vcf_structure_pops, int ichr)
-{
-    for (int ipop=0; ipop<_n_pop; ipop++)
-    {
-        std::cout << "     --Population: " << (ipop+1) << std::endl;
-        
-        // reading vcf file for each population
-        if(!format_vcf::read_vcf_file(population[ipop]._ref_vcf_address[ichr], vcf_structure_pops[ipop]) )
-        {
-            std::cout << "Error in reading vcf file." << std::endl;
-            return false;
-        }
-    }
-    return true;
-}
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////
-/// main body for each generation
+// main body for each generation
 bool Simulation::sim_next_generation(int gen_num)
 {
     
@@ -1643,12 +1440,7 @@ bool Simulation::sim_next_generation(int gen_num)
     
     ///////////////////////////////////////////////////////
     //save genotypes
-    std::vector<int>::iterator it = std::find (_file_output_generations_list.begin(), _file_output_generations_list.end(), gen_num);
     if(_output_all_generations) // for all generations
-    {
-        ras_save_genotypes(gen_num);
-    }
-    else if (it != _file_output_generations_list.end()) // write some generations
     {
         ras_save_genotypes(gen_num);
     }
@@ -1876,7 +1668,6 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     
     //marry the males and females according to the assortative mating coefficient earlier inputed
     std::vector<Couples_Info> couples_info(n_couples2);
-    std::vector<unsigned long int> pos_couple_can_marry;
     
     unsigned long int n_inbreed=0;
     for (unsigned long int i=0; i<n_couples2; i++)
@@ -1910,10 +1701,7 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
             if (inbreeding) n_inbreed++;
         }
         else
-        {
             couples_info[i].inbreed=false; // can marry
-            pos_couple_can_marry.push_back(i);
-        }
     }
     
     //num_offspring distribution
@@ -1928,20 +1716,10 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     }
     else if (population[ipop]._offspring_dist[gen_ind]=="f" || population[ipop]._offspring_dist[gen_ind]=="F") // fixed distribution
     {
-        int nf=floor((double)population[ipop]._pop_size[gen_ind]/(n_couples2-n_inbreed));
+        int nf=round((double)population[ipop]._pop_size[gen_ind]/(n_couples2-n_inbreed));
         for (unsigned long int i=0; i<n_couples2; i++)
         {
             couples_info[i].num_offspring=nf;
-        }
-        // randolmy add the remaining children to couples
-        unsigned long int n_child_remain=population[ipop]._pop_size[gen_ind]-nf*(n_couples2-n_inbreed);
-        //unsigned seed = ras_glob_seed(); //we dont need, because at the begining we called it
-        //srand(seed);
-        // sort randomly
-        std::random_shuffle(pos_couple_can_marry.begin(), pos_couple_can_marry.end(), myrandom);
-        for (unsigned long int i=0; i<n_child_remain; i++)
-        {
-            couples_info[pos_couple_can_marry[i]].num_offspring++;
         }
     }
     
@@ -2692,7 +2470,6 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
     //double m_bv=CommFunc::mean(bv);
     
     // sd parental effect
-    // we will not scale parental effect
     double s_par_eff=0;
     if (population[ipop]._pheno_scheme[iphen]._vf>0)
         s_par_eff=std::sqrt(CommFunc::var(par_eff) / population[ipop]._pheno_scheme[iphen]._vf);
@@ -2726,7 +2503,7 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
         population[ipop].h[i].bv[iphen] = population[ipop].h[i].additive[iphen]+population[ipop].h[i].dominance[iphen];
         // scaling F
         if (s_par_eff>0)
-            population[ipop].h[i].parental_effect[iphen] = par_eff[i];
+            population[ipop].h[i].parental_effect[iphen] = par_eff[i]; // /s_par_eff; // for gen0 _Pop_info_prev_gen[ipop] is 0
         else
             population[ipop].h[i].parental_effect[iphen] = 0;
         
@@ -3018,26 +2795,5 @@ void Simulation::process_mem_usage(double& vm_usage, double& resident_set)
     resident_set = rss * page_size_kb / 1024.0;
 }
 
-
-
-// this file has no header
-// each line is generation number (starting from 1)
-bool Simulation::read_file_output_generation_list(void)
-{
-    char sep=' ';
-    std::string file_name=par.file_output_generations;
-    std::ifstream ifile(file_name.c_str());
-    if(!ifile)
-    {
-        std::cout << "Error: can not open file [" + file_name + "] to read." << std::endl;
-        return false;
-    }
-    
-    std::string line;
-    while (getline(ifile, line)){
-        _file_output_generations_list.push_back(std::stod(line)); // 1-based index
-    }
-    return true;
-}
 
 
