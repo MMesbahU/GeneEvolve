@@ -590,7 +590,7 @@ bool Simulation::ras_init_generation0(void)
             std::cout << "          h2              = " << var_A/var_P << std::endl;
             
             // adjust beta
-            population[ipop]._pheno_scheme[iphen]._beta = population[ipop]._pheno_scheme[iphen]._vf/var_P;
+            population[ipop]._pheno_scheme[iphen]._beta = std::sqrt(population[ipop]._pheno_scheme[iphen]._vf/var_P);
         }
     }
 
