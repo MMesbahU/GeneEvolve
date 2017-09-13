@@ -2790,7 +2790,7 @@ bool Simulation::ras_fill_Pop_info_prev_gen_for_gen0_prev(int ipop)
                 _Pop_info_prev_gen[ipop].mating_value[i] = 0;
                 _Pop_info_prev_gen[ipop].selection_value[i] = 0;
                 _Pop_info_prev_gen[ipop].phen[iphen][i] = distribution(generator); // N(0,_vf)
-                _Pop_info_prev_gen[ipop].phen[iphen][i] = 0; // or 0
+                //_Pop_info_prev_gen[ipop].phen[iphen][i] = 0; // or 0
             }
         }//if
     }
