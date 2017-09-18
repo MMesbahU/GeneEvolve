@@ -590,7 +590,7 @@ bool Simulation::ras_init_generation0(void)
             std::cout << "          h2              = " << var_A/var_P << std::endl;
             
             // adjust beta
-            population[ipop]._pheno_scheme[iphen]._beta = std::sqrt(population[ipop]._pheno_scheme[iphen]._vf/var_P);
+            population[ipop]._pheno_scheme[iphen]._beta = std::sqrt(population[ipop]._pheno_scheme[iphen]._vf/(2*var_P));
         }
     }
 
@@ -2611,6 +2611,8 @@ bool Simulation::ras_initial_human_gen0(int ipop)
     //_Pop_info_prev_gen[ipop].mating_value.resize(n_people,0); // for gen0, set them to 0
     std::cout << "        nhaps = " << nhaps << std::endl;
     
+    
+    
     for (unsigned long int i=0; i<n_people; i++)
     {
         for (int ichr=0; ichr<nchr; ichr++)
@@ -2631,8 +2633,23 @@ bool Simulation::ras_initial_human_gen0(int ipop)
         population[ipop].h[i].ID_Fathers_Mother=i;
         population[ipop].h[i].ID_Mothers_Father=i;
         population[ipop].h[i].ID_Mothers_Mother=i;
+
+
     }
     
+    // create random normal for common effect for gen 0
+    for (int iphen=0; iphen<nphen; iphen++) // for pheno
+    {
+        if(population[ipop]._pheno_scheme[iphen]._vc>0)
+        {
+            std::default_random_engine generator(ras_glob_seed());
+            std::normal_distribution<double> distribution(0.0, sqrt(population[ipop]._pheno_scheme[iphen]._vc));
+            for (unsigned long int i=0; i<n_people; i++)
+            {
+                population[ipop].h[i].common_sibling[iphen] = distribution(generator);
+            }
+        }
+    }
     
     if (_debug)
         std::cout << " end of [ras_initial_human_gen0]" << std::endl;
