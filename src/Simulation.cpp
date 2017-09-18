@@ -2714,9 +2714,10 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
     
     // sd parental effect
     // we will not scale parental effect
-    double s_par_eff=0;
-    if (population[ipop]._pheno_scheme[iphen]._vf>0)
-        s_par_eff=std::sqrt(CommFunc::var(par_eff) / population[ipop]._pheno_scheme[iphen]._vf);
+    //double s_par_eff=0;
+    //if (population[ipop]._pheno_scheme[iphen]._vf>0)
+    //    s_par_eff=std::sqrt(CommFunc::var(par_eff) / population[ipop]._pheno_scheme[iphen]._vf);
+    
     
     // almost no need
     // sd E
