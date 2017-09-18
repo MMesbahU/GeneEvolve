@@ -547,7 +547,6 @@ bool Simulation::ras_init_generation0(void)
     // give some info
     std::cout << "      -------------------------" << std::endl;
     std::cout << "      saving human info" << std::endl;
-    int gen_num=0;
     for (int ipop=0; ipop<_n_pop; ipop++) // for each population
     {
         std::cout << "      Population: " << ipop+1 << std::endl;
