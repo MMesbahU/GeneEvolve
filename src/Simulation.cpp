@@ -2714,9 +2714,12 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
     
     // sd parental effect
     // we will not scale parental effect
-    //double s_par_eff=0;
-    //if (population[ipop]._pheno_scheme[iphen]._vf>0)
-    //    s_par_eff=std::sqrt(CommFunc::var(par_eff) / population[ipop]._pheno_scheme[iphen]._vf);
+    double s_par_eff=0;
+    if (population[ipop]._pheno_scheme[iphen]._vf>0)
+    {
+        //s_par_eff=std::sqrt(CommFunc::var(par_eff) / population[ipop]._pheno_scheme[iphen]._vf);
+        s_par_eff=std::sqrt(population[ipop]._pheno_scheme[iphen]._vf);
+    }
     
     
     // almost no need
@@ -2747,10 +2750,9 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
         // G
         population[ipop].h[i].bv[iphen] = population[ipop].h[i].additive[iphen]+population[ipop].h[i].dominance[iphen];
         // scaling F
-        if (s_par_eff>0)
-            population[ipop].h[i].parental_effect[iphen] = par_eff[i];
-        else
+        if (!(s_par_eff>0))
             population[ipop].h[i].parental_effect[iphen] = 0;
+            //population[ipop].h[i].parental_effect[iphen] = par_eff[i];
         
         // P
         population[ipop].h[i].phen[iphen]= population[ipop].h[i].additive[iphen] + population[ipop].h[i].dominance[iphen] + population[ipop].h[i].common_sibling[iphen] + population[ipop].h[i].e_noise[iphen] + population[ipop].h[i].parental_effect[iphen];
