@@ -75,7 +75,7 @@ private:
     bool assort_mate(int ipop, int gen_ind);
     bool random_mate(int ipop, int gen_ind);
     bool sim_next_generation(int gen_num);
-    bool ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0, double s2_d_gen0);
+    bool ras_scale_AD_compute_GEF(int gen_num, int ipop, int iphen, double s2_a_gen0, double s2_d_gen0);
     bool ras_initial_human_gen0(int ipop);
     bool ras_allocate_memory_for_humans(std::vector<Human> &h, unsigned long int  n_people, int nchr, int nphen);
 

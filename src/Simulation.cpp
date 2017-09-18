@@ -472,6 +472,7 @@ bool Simulation::ras_init_parameters(void)
 
 bool Simulation::ras_init_generation0(void)
 {
+    int gen_num = 0;
     int nphen = par._va[0].size();
     // create genotype and phenotypes for gen0
     for (int ipop=0; ipop<_n_pop; ipop++)
@@ -483,7 +484,7 @@ bool Simulation::ras_init_generation0(void)
         ///////////////////////////////////////////////////////
         //computing additive and dominance components
         std::cout << "      computing additive and dominance components" << std::endl;
-        if(!ras_compute_AD(ipop, 0) ) return false;
+        if(!ras_compute_AD(ipop, gen_num) ) return false;
 
         
         ///////////////////////////
@@ -506,7 +507,7 @@ bool Simulation::ras_init_generation0(void)
             std::cout << "        var(A) before scaling for phenotype " << iphen+1 << " = " << var_a_gen0 << std::endl;
             std::cout << "        var(D) before scaling for phenotype " << iphen+1 << " = " << var_d_gen0 << std::endl;
             std::cout << "        var(G) before scaling for phenotype " << iphen+1 << " = " << var_G_gen0 << std::endl;
-            ras_scale_AD_compute_GEF(ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]);
+            ras_scale_AD_compute_GEF(gen_num, ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]);
         }
     } // for each pop
     
@@ -1534,7 +1535,7 @@ bool Simulation::sim_next_generation(int gen_num)
         //unsigned long int n=population[ipop].h.size();
         for (int iphen=0; iphen<nphen; iphen++)
         {
-            if(!ras_scale_AD_compute_GEF(ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]))
+            if(!ras_scale_AD_compute_GEF(gen_num, ipop, iphen, population[ipop]._var_a_gen0[iphen], population[ipop]._var_d_gen0[iphen]))
                 return false;
             // give some info
             double var_P=CommFunc::var(population[ipop].get_phen(iphen));
@@ -2661,16 +2662,17 @@ bool Simulation::ras_initial_human_gen0(int ipop)
 }
 
 
-bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0, double s2_d_gen0)
+bool Simulation::ras_scale_AD_compute_GEF(int gen_num, int ipop, int iphen, double s2_a_gen0, double s2_d_gen0)
 {
     ///unsigned seed=ras_now_nanoseconds();
     unsigned seed = ras_glob_seed();
 
-    std::default_random_engine generator(seed);
+    std::default_random_engine generator_e(seed);
     
-    std::normal_distribution<double> distribution(0.0, 1);//normal dist
+    std::normal_distribution<double> distribution_e(0.0, 1); //normal dist
     
-    double beta=population[ipop]._pheno_scheme[iphen]._beta;
+    double beta = population[ipop]._pheno_scheme[iphen]._beta;
+    double vf   = population[ipop]._pheno_scheme[iphen]._vf;
 
     // Get breeding values and parental_effect
     unsigned long int n_human=population[ipop].h.size();
@@ -2679,21 +2681,36 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
     //std::vector<double> bv(n_human);
     std::vector<double> e(n_human);
     std::vector<double> par_eff(n_human);
+    
+    std::default_random_engine generator_f(seed+1);
+    std::normal_distribution<double> distribution_f(0.0, std::sqrt(vf));
+
+    
     for (unsigned long int i=0; i<n_human; i++)
     {
         // create e_noise
-        e[i] = distribution(generator); // create noise with N(0,1)
+        e[i] = distribution_e(generator_e); // create noise with N(0,1)
 
         a[i]=population[ipop].h[i].additive[iphen];
         d[i]=population[ipop].h[i].dominance[iphen];
 
         // create parental_effect
         // transmission_of_environmental_effects_from_parents_to_offspring
-        unsigned long int ind_f = population[ipop].h[i].ID_Father;
-        unsigned long int ind_m = population[ipop].h[i].ID_Mother;
-        double f_father = _Pop_info_prev_gen[ipop].phen[iphen][ind_f];
-        double f_mother = _Pop_info_prev_gen[ipop].phen[iphen][ind_m];
-        par_eff[i] = beta*(f_father+f_mother);
+        if (gen_num==0)
+        {
+            if (vf>0)
+            {
+                par_eff[i] = distribution_f(generator_f); // N(0,_vf)
+            }
+        }
+        else
+        {
+            unsigned long int ind_f = population[ipop].h[i].ID_Father;
+            unsigned long int ind_m = population[ipop].h[i].ID_Mother;
+            double f_father = _Pop_info_prev_gen[ipop].phen[iphen][ind_f]; // father's phenotype
+            double f_mother = _Pop_info_prev_gen[ipop].phen[iphen][ind_m];
+            par_eff[i] = beta*(f_father+f_mother);
+        }
     }
     
     // sd additive
@@ -2816,8 +2833,8 @@ bool Simulation::ras_fill_Pop_info_prev_gen_for_gen0_prev(int ipop)
             {
                 _Pop_info_prev_gen[ipop].mating_value[i] = 0;
                 _Pop_info_prev_gen[ipop].selection_value[i] = 0;
-                _Pop_info_prev_gen[ipop].phen[iphen][i] = distribution(generator); // N(0,_vf)
-                //_Pop_info_prev_gen[ipop].phen[iphen][i] = 0; // or 0
+                //_Pop_info_prev_gen[ipop].phen[iphen][i] = distribution(generator); // N(0,_vf)
+                _Pop_info_prev_gen[ipop].phen[iphen][i] = 0; // or 0
             }
         }//if
     }
