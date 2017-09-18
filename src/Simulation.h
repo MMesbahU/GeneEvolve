@@ -22,6 +22,7 @@ public:
     std::vector<double> mating_value; // for each ind
     std::vector<double> selection_value; // for each ind
     std::vector<std::vector<double> > phen; // for each phen and ind
+    std::vector<std::vector<double> > parental_effect; // for each phen and ind
 };
 
 
@@ -32,6 +33,7 @@ public:
     int _n_pop;
     int _tot_gen;
     bool _debug;
+    int _vt_type;
     std::vector<Population> population;
     Parameters par;
     //_tot_gen rows, _n_pop^2 cols: each column is the the elements of the transition matrix in format: [a11 a12 a13 ... a21 a22 a23 ...]
@@ -46,7 +48,7 @@ public:
     std::vector<int> _all_active_chrs;
     // for Fprime NewtonRaphson
     //typedef double (Simulation::*function_1d)(double); // function_1d is a pointer to a double f(double) function
-    std::vector<Pop_phen_info> _Pop_info_prev_gen; // Saving mating_value for the next generation
+    std::vector<Pop_phen_info> _Pop_info_prev_gen; // Saving mating_value for the next generation (for each population)
     
     // environmental effects specific to each_population
     std::vector<double> _gamma; // for each phenotype and all the populations

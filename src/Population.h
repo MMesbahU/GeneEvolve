@@ -254,6 +254,7 @@ public:
     std::vector<std::vector<double> > _lambda;            //  selection value coefficient=1
     std::vector<double> _MM_percent;                      // for each population
     std::vector<bool> _RM;                                // for each population
+    int _vt_type;                                         // type of vertical transition (familial effect)
     
     // migration matrix
     std::vector<double> _gamma;                           // for each phenotype and all populations,  _environmental_effects_specific_to_each_population=0
@@ -321,6 +322,7 @@ public:
         _MM_percent.resize(npop,0);
         _RM.resize(npop,false);
         file_output_generations="";
+        _vt_type = 1;
         
         // we can not set _gamma.resize(npheno,0), because _gamma.size=npheno
         //_gamma.resize(npheno,0); // for each phenotype and all populations
@@ -334,6 +336,7 @@ class Population
 public:
     int _pop_num;
     int _nchr;
+    int _vt_type;
     std::vector<Phenotype_scheme> _pheno_scheme; // each population has several pheno, so several Phenotype_scheme
     std::vector<Human> h;
     std::vector<Couples_Info> _couples_info;

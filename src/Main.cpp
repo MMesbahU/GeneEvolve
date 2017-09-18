@@ -153,6 +153,7 @@ void helpFile()
     printf("        --file_mutation_map      : [filename]\n");
     printf("        --RM                     : [off]  ->  Random Mating\n");
     printf("        --MM                     : [0]\n");
+    printf("        --vt_type                : [1]\n");
     printf("          Percentage of individuals who have more than 1 spouse (0<=MM<=1).\n");
     printf("        --next_population        :\n");
     printf("          This keyword can be used to distinguish between populations.\n");
@@ -242,6 +243,10 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
         else if(vec_arg[i]=="--RM"){
             par._RM[ipop]=true;
         }
+        else if(vec_arg[i]=="--vt_type"){
+            par._vt_type = std::stoi(vec_arg[++i]);
+        }
+        
         /////////////////////////////////////////////////////////
         // for each phenotype
         else if(vec_arg[i]=="--file_cv_info"){ // for each pheno
@@ -583,6 +588,7 @@ bool parameter_print(Parameters &par)
         std::cout << "      --file_mutation_map      : [" << par.file_mutation_map[ipop] << "]" << std::endl;
         std::cout << "      --MM                     : [" << par._MM_percent[ipop] << "]" << std::endl;
         std::cout << "      --RM                     : [" << (par._RM[ipop] ? "On" : "Off") << "]" << std::endl;
+        std::cout << "      --vt_type                : [" << par._vt_type << "]" << std::endl;
         
         int pop_npheno=par.file_cv_info[ipop].size();
         for (int j=0; j<pop_npheno; j++)

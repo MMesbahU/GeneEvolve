@@ -168,6 +168,7 @@ bool Simulation::ras_init_parameters(void)
     _out_plink=par._out_plink;
     _out_vcf=par._out_vcf;
     _out_interval=par._out_interval;
+    _vt_type = par._vt_type;
     
     
     _Pop_info_prev_gen.resize(_n_pop); // to save mating_value for the previous generation, for each population
@@ -2706,8 +2707,19 @@ bool Simulation::ras_scale_AD_compute_GEF(int gen_num, int ipop, int iphen, doub
         {
             unsigned long int ind_f = population[ipop].h[i].ID_Father;
             unsigned long int ind_m = population[ipop].h[i].ID_Mother;
-            double f_father = _Pop_info_prev_gen[ipop].phen[iphen][ind_f]; // father's phenotype
-            double f_mother = _Pop_info_prev_gen[ipop].phen[iphen][ind_m];
+            double f_father = 0;
+            double f_mother = 0;
+            
+            if (_vt_type==1)
+            {
+                f_father = _Pop_info_prev_gen[ipop].phen[iphen][ind_f]; // father's phenotype
+                f_mother = _Pop_info_prev_gen[ipop].phen[iphen][ind_m];
+            }
+            else if (_vt_type==2)
+            {
+                f_father = _Pop_info_prev_gen[ipop].parental_effect[iphen][ind_f]; // father's parental_effect
+                f_mother = _Pop_info_prev_gen[ipop].parental_effect[iphen][ind_m];
+            }
             par_eff[i] = beta*(f_father+f_mother);
         }
     }
@@ -2793,20 +2805,26 @@ bool Simulation::ras_save_human_info_to_Pop_info_prev_gen(int ipop)
     std::vector<double> mating_value(n_human); // for each ind
     std::vector<double> selection_value(n_human); // for each ind
     std::vector<std::vector<double> > phen(nphen, std::vector<double>(n_human)); // for each phen and ind
+    std::vector<std::vector<double> > parental_effect(nphen, std::vector<double>(n_human)); // for each phen and ind
 
     for (unsigned long int i=0; i<n_human; i++)
     {
         mating_value[i] = population[ipop].h[i].mating_value;
         selection_value[i] = population[ipop].h[i].selection_value;
         for (int iphen=0; iphen<nphen; iphen++)
+        {
             phen[iphen][i] = population[ipop].h[i].phen[iphen];
+            parental_effect[iphen][i] = population[ipop].h[i].parental_effect[iphen];
+        }
     }
     _Pop_info_prev_gen[ipop].mating_value=mating_value;
     _Pop_info_prev_gen[ipop].selection_value=selection_value;
     _Pop_info_prev_gen[ipop].phen=phen;
+    _Pop_info_prev_gen[ipop].parental_effect=parental_effect;
 
     return true;
 }
+
 
 
 bool Simulation::ras_fill_Pop_info_prev_gen_for_gen0_prev(int ipop)
@@ -2814,29 +2832,10 @@ bool Simulation::ras_fill_Pop_info_prev_gen_for_gen0_prev(int ipop)
 
     unsigned long int n=population[ipop].h.size();
     int nphen=population[ipop]._pheno_scheme.size();
-    _Pop_info_prev_gen[ipop].mating_value.resize(n);
-    _Pop_info_prev_gen[ipop].selection_value.resize(n);
-    _Pop_info_prev_gen[ipop].phen.resize(nphen, std::vector<double>(n));
-    
-    for (int iphen=0; iphen<nphen; iphen++)
-    {
-        double vf=population[ipop]._pheno_scheme[iphen]._vf;
-        if (vf != 0)
-        {
-            ///unsigned seed=ras_now_nanoseconds()+iphen;
-            unsigned seed = ras_glob_seed();
-            std::default_random_engine generator(seed);
-            std::normal_distribution<double> distribution(0.0, std::sqrt(vf));
-
-            for (unsigned long int i=0; i<n; i++)
-            {
-                _Pop_info_prev_gen[ipop].mating_value[i] = 0;
-                _Pop_info_prev_gen[ipop].selection_value[i] = 0;
-                //_Pop_info_prev_gen[ipop].phen[iphen][i] = distribution(generator); // N(0,_vf)
-                _Pop_info_prev_gen[ipop].phen[iphen][i] = 0; // or 0
-            }
-        }//if
-    }
+    _Pop_info_prev_gen[ipop].mating_value.resize(n,0);
+    _Pop_info_prev_gen[ipop].selection_value.resize(n,0);
+    _Pop_info_prev_gen[ipop].phen.resize(nphen, std::vector<double>(n,0));
+    _Pop_info_prev_gen[ipop].parental_effect.resize(nphen, std::vector<double>(n,0));
     
     return true;
 }
