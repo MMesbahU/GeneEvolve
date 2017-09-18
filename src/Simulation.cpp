@@ -591,6 +591,8 @@ bool Simulation::ras_init_generation0(void)
             
             // adjust beta
             population[ipop]._pheno_scheme[iphen]._beta = std::sqrt(population[ipop]._pheno_scheme[iphen]._vf/(2*var_P));
+            std::cout << "          adjusted beta   = " << population[ipop]._pheno_scheme[iphen]._beta << std::endl;
+
         }
     }
 
@@ -2751,12 +2753,12 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
         // G
         population[ipop].h[i].bv[iphen] = population[ipop].h[i].additive[iphen]+population[ipop].h[i].dominance[iphen];
         
-        // scaling F
-        if (!(population[ipop]._pheno_scheme[iphen]._vf>0))
-        {
+        // F
+        if (population[ipop]._pheno_scheme[iphen]._vf>0)
+            population[ipop].h[i].parental_effect[iphen] = par_eff[i];
+        else
             population[ipop].h[i].parental_effect[iphen] = 0;
-            //population[ipop].h[i].parental_effect[iphen] = par_eff[i];
-        }
+
         
         // P
         population[ipop].h[i].phen[iphen] = population[ipop].h[i].additive[iphen] + population[ipop].h[i].dominance[iphen] + population[ipop].h[i].common_sibling[iphen] + population[ipop].h[i].e_noise[iphen] + population[ipop].h[i].parental_effect[iphen];
