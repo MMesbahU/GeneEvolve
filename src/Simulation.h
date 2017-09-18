@@ -1,4 +1,5 @@
-#include <iostream>
+#include <iostream>     // std::cout, std::fixed
+#include <iomanip>      // std::setprecision
 #include <cstdio>
 #include <ctime>
 #include <cmath> // for round, floor, ceil, trunc
