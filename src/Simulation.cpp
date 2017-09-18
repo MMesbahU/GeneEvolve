@@ -659,61 +659,61 @@ void Simulation::ras_show_res(void)
         {
             n_max_res = population[ipop].ret_var_A[iphen].size() > n_print ? n_print : population[ipop].ret_var_A[iphen].size();
             std::cout << " phenotype: " << iphen+1 << std::endl;
-            std::cout << "   ret_var_A:" << std::fixed;
+            std::cout << "   var_A:" << std::fixed;
             for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_var_A[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_D:" << std::fixed;
+            std::cout << "   var_D:" << std::fixed;
             for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_var_D[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_G:" << std::fixed;
+            std::cout << "   var_G:" << std::fixed;
             for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_var_G[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_C:" << std::fixed;
+            std::cout << "   var_C:" << std::fixed;
             for (unsigned i=0; i<population[ipop].ret_var_C[iphen].size(); i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_var_C[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_E:" << std::fixed;
+            std::cout << "   var_E:" << std::fixed;
             for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_var_E[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_F:" << std::fixed;
+            std::cout << "   var_F:" << std::fixed;
             for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_var_F[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_P:" << std::fixed;
+            std::cout << "   var_P:" << std::fixed;
             for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_var_P[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_h2:" << std::fixed;
+            std::cout << "   h2   :" << std::fixed;
             for (unsigned i=0; i<n_max_res; i++)
                 std::cout << " " << std::setprecision(per) << population[ipop].ret_h2[iphen][i];
             std::cout << std::endl;
             
-            std::cout << "   ret_var_A/ret_var_A[0]:" << std::fixed;
-            for (unsigned i=0; i<population[ipop].ret_var_A[iphen].size(); i++)
-                std::cout << " " << std::setprecision(per) << population[ipop].ret_var_A[iphen][i]/population[ipop].ret_var_A[iphen][0];
-            std::cout << std::endl;
+            //std::cout << "   var_A/var_A[0]:" << std::fixed;
+            //for (unsigned i=0; i<population[ipop].ret_var_A[iphen].size(); i++)
+            //    std::cout << " " << std::setprecision(per) << population[ipop].ret_var_A[iphen][i]/population[ipop].ret_var_A[iphen][0];
+            //std::cout << std::endl;
         }
         
         n_max_res = population[ipop].ret_var_mating_value.size() > n_print ? n_print : population[ipop].ret_var_mating_value.size();
         // mating_value
-        std::cout << " ret_var_mating_value:" << std::fixed;
+        std::cout << " var_mating_value   :" << std::fixed;
         for (unsigned i=0; i<n_max_res; i++)
             std::cout << " " << std::setprecision(per) << population[ipop].ret_var_mating_value[i];
         std::cout << std::endl;
 
         // selection_value
-        std::cout << " ret_var_selection_value:" << std::fixed;
+        std::cout << " var_selection_value:" << std::fixed;
         for (unsigned i=0; i<n_max_res; i++)
             std::cout << " " << std::setprecision(per) << population[ipop].ret_var_selection_value[i];
         std::cout << std::endl;
