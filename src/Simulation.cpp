@@ -2642,7 +2642,8 @@ bool Simulation::ras_initial_human_gen0(int ipop)
     {
         if(population[ipop]._pheno_scheme[iphen]._vc>0)
         {
-            std::default_random_engine generator(ras_glob_seed());
+            unsigned seed = ras_glob_seed();
+            std::default_random_engine generator(seed);
             std::normal_distribution<double> distribution(0.0, sqrt(population[ipop]._pheno_scheme[iphen]._vc));
             for (unsigned long int i=0; i<n_people; i++)
             {
@@ -2690,7 +2691,7 @@ bool Simulation::ras_scale_AD_compute_GEF(int ipop, int iphen, double s2_a_gen0,
         unsigned long int ind_m = population[ipop].h[i].ID_Mother;
         double f_father = _Pop_info_prev_gen[ipop].phen[iphen][ind_f];
         double f_mother = _Pop_info_prev_gen[ipop].phen[iphen][ind_m];
-        par_eff[i] = beta*(f_father+f_mother)/std::sqrt(2);
+        par_eff[i] = beta*(f_father+f_mother);
     }
     
     // sd additive
