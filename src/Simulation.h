@@ -7,6 +7,8 @@
 #include <cstdlib>      // std::rand, std::srand
 #include <random>
 
+#include "parameters.h"
+
 #include "Population.h"
 
 

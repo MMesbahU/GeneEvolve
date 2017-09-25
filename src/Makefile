@@ -9,7 +9,7 @@ OPTFLAG_DEBUG = -ggdb -O0
 # Example if you have Class1.cpp, Class1.h, Class2.cpp, and Class2.cpp, specify:
 # TOOLBASE = Class1 Class2
 
-TOOLBASE = Simulation Population CommFunc RasRandomNumber RasMatrix format_hap format_plink format_vcf
+TOOLBASE = Simulation Population CommFunc RasRandomNumber RasMatrix format_hap format_plink format_vcf parameters
 
 # SRCONLY - .cpp only files.  Specify the entire name, including the .cpp.
 # Example, if you have Main.cpp, and File1.cpp, specify:

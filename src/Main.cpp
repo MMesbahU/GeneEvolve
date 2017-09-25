@@ -4,12 +4,10 @@
 #include <ostream>
 #include <iostream>
 #include <ctime>
-#include <chrono> // for seconds, milliseconds, nanoseconds, picoseconds
+//#include <chrono> // for seconds, milliseconds, nanoseconds, picoseconds
 #include <string> // str1.compare(str2)
-//#include "Parameters.h"
-//#include "StringBasics.h"
-//#include "HaplotypeSet.h"
 #include "Simulation.h"
+//#include "parameters.h" is Simulation.h
 //#include "hap.h" it is in Simulation.h
 #include "CommFunc.h"
 //#include "Unique.h"
@@ -17,23 +15,19 @@
 //using Eigen::MatrixXd;
 //using namespace Eigen;
 
-int transFactor = 3;
-int cisFactor = 2;
+//int transFactor = 3;
+//int cisFactor = 2;
 
 
 void ProgramVersion();
 void helpFile();
-bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par);
-bool parameter_check(Parameters &par);
-bool parameter_print(Parameters &par);
-unsigned ras_now_nanoseconds(void);
 
 
 int main(int argc, char ** argv)
 {
-    int cpus;
-    
     int start_time = time(0);
+
+    int cpus;
 
 #ifdef _OPENMP
     omp_set_num_threads(cpus);
@@ -55,7 +49,7 @@ int main(int argc, char ** argv)
     vec_arg[argc]="nothing"; // for checking
     vec_arg[argc+1]="nothing";
 
-    if (!parameter_proc(vec_arg, par))
+    if (!par.read(vec_arg))
     {
         std::cout << std::endl;
         std::cout << " For more information type [GeneEvolve --help]." << std::endl;
@@ -63,15 +57,13 @@ int main(int argc, char ** argv)
         return -1;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////
-    if (par.help)
+    if (par._help)
     {
         helpFile();
         return -1;
     }
     
-    if (!parameter_check(par))
+    if (!par.check())
     {
         std::cout << std::endl;
         std::cout << " For more information type [GeneEvolve --help]." << std::endl;
@@ -80,7 +72,7 @@ int main(int argc, char ** argv)
     }
     
     
-    parameter_print(par);
+    par.print();
     
     
     /////////////////////////////////////////////////////////////////////////////////
@@ -115,15 +107,18 @@ int main(int argc, char ** argv)
 
 void ProgramVersion()
 {
-    printf("\n");
-    printf(" ------------------------------------------------------------------------------ \n");
-	printf("                                  GeneEvolve                                    \n");
-	printf(" ------------------------------------------------------------------------------ \n");
-    printf(" (c) 2015 - Rasool Tahmasbi and Matthew C. Keller.\n");
-    std::cout << "\n Version: " << VERSION<< ";\n Built: " << DATE << " by " << USER << std::endl;
     std::cout << std::endl;
-    printf(" URL = https://github.com/rtahmasbi/GeneEvolve\n");
-    printf(" URL = http://matthewckeller.com/html/GeneEvolve.html\n");
+    std::cout << " ------------------------------------------------------------------------------" << std::endl;
+    std::cout << "                                  GeneEvolve                                   " << std::endl;
+    std::cout << " ------------------------------------------------------------------------------" << std::endl;
+    std::cout << " (c) 2015-2017 - Rasool Tahmasbi and Matthew C. Keller." << std::endl;
+    std::cout << std::endl;
+    std::cout << " Version: " << VERSION << std::endl;
+    std::cout << " Built: " << DATE << " by " << USER << std::endl;
+    std::cout << std::endl;
+    std::cout << " URL = https://github.com/rtahmasbi/GeneEvolve" << std::endl;
+    //std::cout << " URL = http://matthewckeller.com/html/GeneEvolve.html" << std::endl;
+    std::cout << std::endl;
 }
 
 void helpFile()
@@ -199,450 +194,7 @@ void helpFile()
     std::cout << std::endl;
 
 
-
-	return;
 }
 
-
-bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
-{
-    int ipop=0, npop=1;
-    for (int i=1; i<(int)vec_arg.size(); i++)
-    {
-        if(vec_arg[i]=="--next_population"){
-            npop++;
-        }
-    }
-    
-    par.init(npop);
-    
-    for (int i=1; i<(int)vec_arg.size(); i++)
-    {
-        if(vec_arg[i]=="--next_population"){
-            ipop++;
-        }
-        //=====================================================================
-        // population information
-        else if(vec_arg[i]=="--file_gen_info"){
-            par.file_gen_info[ipop]=vec_arg[++i];
-        }
-        else if(vec_arg[i]=="--file_hap_name"){
-            par.file_hap_name[ipop]=vec_arg[++i];
-        }
-        else if(vec_arg[i]=="--file_ref_vcf"){
-            par.file_ref_vcf[ipop]=vec_arg[++i];
-        }
-        else if(vec_arg[i]=="--file_recom_map"){
-            par.file_recom_map[ipop]=vec_arg[++i];
-        }
-        else if(vec_arg[i]=="--file_mutation_map"){
-            par.file_mutation_map[ipop]=vec_arg[++i];
-        }
-        else if(vec_arg[i]=="--MM"){
-            par._MM_percent[ipop]=std::stod(vec_arg[++i]);
-        }
-        else if(vec_arg[i]=="--RM"){
-            par._RM[ipop]=true;
-        }
-        else if(vec_arg[i]=="--vt_type"){
-            par._vt_type = std::stoi(vec_arg[++i]);
-        }
-        
-        /////////////////////////////////////////////////////////
-        // for each phenotype
-        else if(vec_arg[i]=="--file_cv_info"){ // for each pheno
-            par.file_cv_info[ipop].push_back(vec_arg[++i]);
-        }
-        else if(vec_arg[i]=="--file_cvs"){ // for each pheno
-            par.file_cvs[ipop].push_back(vec_arg[++i]);
-        }
-        else if(vec_arg[i]=="--va"){ // for each pheno
-            par._va[ipop].push_back(std::stod(vec_arg[++i]));
-        }
-        else if(vec_arg[i]=="--vd"){ // for each pheno
-            par._vd[ipop].push_back(std::stod(vec_arg[++i]));
-        }
-        else if(vec_arg[i]=="--vc"){ // for each pheno
-            par._vc[ipop].push_back(std::stod(vec_arg[++i]));
-        }
-        else if(vec_arg[i]=="--ve"){ // for each pheno
-            par._ve[ipop].push_back(std::stod(vec_arg[++i]));
-        }
-        else if(vec_arg[i]=="--vf"){ // for each pheno
-            par._vf[ipop].push_back(std::stod(vec_arg[++i]));
-        }
-        else if(vec_arg[i]=="--omega"){
-            par._omega[ipop].push_back(std::stod(vec_arg[++i])); // mating value
-        }
-        else if(vec_arg[i]=="--beta"){
-            par._beta[ipop].push_back(std::stod(vec_arg[++i])); // transmission_of_environmental_effects_from_parents_to_offspring
-        }
-        else if(vec_arg[i]=="--lambda"){
-            par._lambda[ipop].push_back(std::stod(vec_arg[++i])); // selection value
-        }
-        //=====================================================================
-        // for each population
-        // _gamma
-        else if(vec_arg[i]=="--gamma"){
-            par._gamma.push_back(std::stod(vec_arg[++i])); // environmental_effects_specific_to_each_population
-        }
-        //=====================================================================
-        // migration matrix
-        else if(vec_arg[i]=="--file_migration"){
-            par.file_migration=vec_arg[++i];
-        }
-        //=====================================================================
-        // other options
-        else if(vec_arg[i]=="--avoid_inbreeding"){
-            par.avoid_inbreeding=true;
-        }
-        else if(vec_arg[i]=="--seed"){
-            par._seed=std::stod(vec_arg[++i]);
-        }
-        else if(vec_arg[i]=="--debug"){
-            par.debug=true;
-        }
-        //=====================================================================
-        // output
-        else if(vec_arg[i]=="--prefix"){
-            par.prefix=vec_arg[++i];
-        }
-        else if(vec_arg[i]=="--out_hap"){
-            par._out_hap=true;
-        }
-        else if(vec_arg[i]=="--out_plink"){
-            par._out_plink=true;
-        }
-        else if(vec_arg[i]=="--out_plink01"){
-            par._out_plink01=true;
-        }
-        else if(vec_arg[i]=="--out_vcf"){
-            par._out_vcf=true;
-        }
-        else if(vec_arg[i]=="--out_interval"){
-            par._out_interval=true;
-        }
-        else if(vec_arg[i]=="--output_all_generations"){
-            par.output_all_generations=true;
-        }
-        else if(vec_arg[i]=="--file_output_generations"){
-            par.file_output_generations=vec_arg[++i];
-        }
-        //=====================================================================
-        // --help
-        else if(vec_arg[i]=="--help" || vec_arg[i]=="-h" || vec_arg[i]=="?"){
-            par.help=true;
-        }
-        else if(vec_arg[i]=="nothing"){
-            // do nothing
-        }
-        else
-        {
-            std::cout << " Error: unknown parameter [" << vec_arg[i] << "]" << std::endl;
-            return false;
-        }
-    }
-    
-    // set default value for optinal vectors:
-    for (ipop=0; ipop<npop; ipop++)
-    {
-        unsigned pop_npheno=par.file_cv_info[ipop].size();
-
-        // setting va=-1 and vd=-1 means that program will use the variance of real a and d in cv_info file
-        // set _va=-1
-        if(par._va[ipop].size()==0)
-        {
-            par._va[ipop].resize(pop_npheno,-1);
-        }
-        // set _vd=-1
-        if(par._vd[ipop].size()==0)
-        {
-            par._vd[ipop].resize(pop_npheno,-1);
-        }
-        // set _vc=0
-        if(par._vc[ipop].size()==0)
-        {
-            par._vc[ipop].resize(pop_npheno,0);
-        }
-        // set _ve=1
-        if(par._ve[ipop].size()==0)
-        {
-            par._ve[ipop].resize(pop_npheno,1);
-        }
-        // set _vf=0
-        if(par._vf[ipop].size()==0)
-        {
-            par._vf[ipop].resize(pop_npheno,0);
-        }
-        // set _omega=1 // for mating value
-        if(par._omega[ipop].size()==0)
-        {
-            par._omega[ipop].resize(pop_npheno,1);
-        }
-        // set _beta=1 // for parental effect to offspring; it is 1, but user can define ve as zero
-        if(par._beta[ipop].size()==0)
-        {
-            par._beta[ipop].resize(pop_npheno,1);
-        }
-        // set _lambda=1 // for selection value
-        if(par._lambda[ipop].size()==0)
-        {
-            par._lambda[ipop].resize(pop_npheno,1);
-        }
-    }
-    // set _gamma=0
-    if(par._gamma.size()==0)
-    {
-        par._gamma.resize(par.file_cv_info[0].size(),0); // set 0 for all phenotypes
-    }
-    //_seed
-    if(par._seed==0)
-    {
-        par._seed=ras_now_nanoseconds();
-    }
-    
-    
-    return true;
-}
-
-bool parameter_check(Parameters &par)
-{
-    if (par.file_gen_info[0].size()==0 && !par.help)
-    {
-        return false;
-    }
-    
-    unsigned nphen=par.file_cv_info[0].size();
-    
-    //cehck the number of populations in the inputted options
-    for (int ipop=0; ipop< par._n_pop; ipop++)
-    {
-        if (par.file_gen_info[ipop].size()==0)
-        {
-            std::cout << "Error: missing parameter [--file_gen_info] in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par.file_hap_name[ipop].size()==0 && par.file_ref_vcf[ipop].size()==0)
-        {
-            std::cout << "Error: missing the reference file. Check the parameter [--file_hap_name] or [--file_ref_vcf] in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par.file_recom_map[ipop].size()==0)
-        {
-            std::cout << "Error: missing parameter [--file_recom_map] in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        
-        // check phenotypes prameters
-        unsigned pop_npheno=par.file_cv_info[ipop].size();
-        if (pop_npheno==0)
-        {
-            std::cout << "Error: missing parameter [--file_cv_info] in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par.file_cvs[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--file_cvs]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par.file_cvs[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--file_cvs]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._va[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--va]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._vd[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--vd]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._vc[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--vc]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._ve[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--ve]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._vf[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--vf]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._omega[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--omega]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._beta[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--beta]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (par._lambda[ipop].size()!=pop_npheno)
-        {
-            std::cout << "Error: each phenotype needs one [--lambda]. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        if (pop_npheno!=nphen)
-        {
-            std::cout << "Error: The number of phenotypes should be the same for each population." << std::endl;
-            return false;
-        }
-
-        // check range for va, vd, ve, vf
-        for (int iphen=0; iphen<(int)par._va[ipop].size(); iphen++)
-        {
-            if (!(par._va[ipop][iphen]>0 || par._va[ipop][iphen]==-1))
-            {
-                std::cout << "Error: The parameter [--va] should be positive. Error in population " << ipop+1 << "." << std::endl;
-                return false;
-            }
-        }
-        for (int iphen=0; iphen<(int)par._vd[ipop].size(); iphen++)
-        {
-            if (!(par._vd[ipop][iphen]>=0 || par._vd[ipop][iphen]==-1))
-            {
-                std::cout << "Error: The parameter [--vd] should not be negetive. Error in population " << ipop+1 << "." << std::endl;
-                return false;
-            }
-        }
-        for (int iphen=0; iphen<(int)par._vc[ipop].size(); iphen++)
-        {
-            if (par._vc[ipop][iphen]<0)
-            {
-                std::cout << "Error: The parameter [--vc] should not be negetive. Error in population " << ipop+1 << "." << std::endl;
-                return false;
-            }
-        }
-        for (int iphen=0; iphen<(int)par._ve[ipop].size(); iphen++)
-        {
-            if (par._ve[ipop][iphen]<0)
-            {
-                std::cout << "Error: The parameter [--ve] should not be negetive. Error in population " << ipop+1 << "." << std::endl;
-                return false;
-            }
-        }
-        for (int iphen=0; iphen<(int)par._vf[ipop].size(); iphen++)
-        {
-            if (par._vf[ipop][iphen]<0)
-            {
-                std::cout << "Error: The parameter [--vf] should not be negetive. Error in population " << ipop+1 << "." << std::endl;
-                return false;
-            }
-        }
-        if (par._MM_percent[ipop]<0 || par._MM_percent[ipop]>1)
-        {
-            std::cout << "Error: The parameter [--MM] should be between 0 and 1. Error in population " << ipop+1 << "." << std::endl;
-            return false;
-        }
-        
-    } // for ipop
-
-    
-    //_gamma
-    if (par._gamma.size()!=nphen)
-    {
-        std::cout << "Error: the number of [--gamma] must be equal to the number of phenotypes (" << nphen << ")." << std::endl;
-        return false;
-    }
-
-    //_seed
-    if (par._seed<0)
-    {
-        std::cout << "Eroor: the parameter [--seed] can't be negative." << std::endl;
-    }
-    
-    //check migration
-    if (par.file_gen_info.size()>1 && par.file_migration.size()==0)
-    {
-        std::cout << "Error: When you have more than one populations, you must specify the [--file_migration] option." << std::endl;
-        return false;
-    }
-    if (par.file_gen_info.size()==1 && par.file_migration.size()>0)
-    {
-        std::cout << " Warning: when there is one population, the parameter [--file_migration] is redundant." << std::endl;
-    }
-    
-    
-    return true;
-}
-
-bool parameter_print(Parameters &par)
-{
-    if (par.help) return true; // no need to pritnt options
-    
-    std::cout << std::endl;
-    std::cout << " Options:" << std::endl;
-    std::cout << std::endl;
-    int npop=par.file_gen_info.size();
-    
-    for (int ipop=0; ipop<npop; ipop++){
-        std::cout << "  Population " << ipop+1 << ":" << std::endl;
-        std::cout << "      --file_gen_info          : [" << par.file_gen_info[ipop] << "]" << std::endl;
-        std::cout << "      --file_hap_name          : [" << par.file_hap_name[ipop] << "]" << std::endl;
-        std::cout << "      --file_ref_vcf           : [" << par.file_ref_vcf[ipop] << "]" << std::endl;
-        std::cout << "      --file_recom_map         : [" << par.file_recom_map[ipop] << "]" << std::endl;
-        std::cout << "      --file_mutation_map      : [" << par.file_mutation_map[ipop] << "]" << std::endl;
-        std::cout << "      --MM                     : [" << par._MM_percent[ipop] << "]" << std::endl;
-        std::cout << "      --RM                     : [" << (par._RM[ipop] ? "On" : "Off") << "]" << std::endl;
-        std::cout << "      --vt_type                : [" << par._vt_type << "]" << std::endl;
-        
-        int pop_npheno=par.file_cv_info[ipop].size();
-        for (int j=0; j<pop_npheno; j++)
-        {
-            std::cout << "      phenotype: " << j+1 << std::endl;
-            std::cout << "        --file_cv_info         : [" << par.file_cv_info[ipop][j] << "]" << std::endl;
-            std::cout << "        --file_cvs             : [" << par.file_cvs[ipop][j] << "]" << std::endl;
-            std::cout << "        --va                   : [" << par._va[ipop][j] << "]" << std::endl;
-            std::cout << "        --vd                   : [" << par._vd[ipop][j] << "]" << std::endl;
-            std::cout << "        --vc                   : [" << par._vc[ipop][j] << "]" << std::endl;
-            std::cout << "        --ve                   : [" << par._ve[ipop][j] << "]" << std::endl;
-            std::cout << "        --vf                   : [" << par._vf[ipop][j] << "]" << std::endl;
-            std::cout << "        --omega                : [" << par._omega[ipop][j] << "]" << std::endl;
-            std::cout << "        --lambda               : [" << par._lambda[ipop][j] << "]" << std::endl;
-            std::cout << "        --beta                 : [" << par._beta[ipop][j] << "]" << std::endl;
-        }
-    }
-
-    std::cout << "  Immigration parameters" << std::endl;
-    std::cout << "      --file_migration         : [" << par.file_migration << "]" << std::endl;
-
-    std::cout << "  Environmental effects specific to each population (for each phenotype)" << std::endl;
-    int pop_npheno=par.file_cv_info[0].size();
-    for (int j=0; j<pop_npheno; j++)
-    {
-        std::cout << "      --gamma                  : [" << par._gamma[j] << "]" << std::endl;
-    }
-    
-    std::cout << "  Other parameters" << std::endl;
-    std::cout << "      --seed                   : [" << par._seed << "]" << std::endl;
-    std::cout << "      --avoid_inbreeding       : [" << (par.avoid_inbreeding ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --debug                  : [" << (par.debug ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --prefix                 : [" << par.prefix << "]" << std::endl;
-    std::cout << "      --out_hap                : [" << (par._out_hap ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --out_plink              : [" << (par._out_plink ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --out_plink01            : [" << (par._out_plink01 ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --out_vcf                : [" << (par._out_vcf ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --out_interval           : [" << (par._out_interval ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --output_all_generations : [" << (par.output_all_generations ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --file_output_generations: [" << par.file_output_generations << "]" << std::endl;
-    std::cout << std::endl;
-    return true;
-}
-
-
-
-unsigned ras_now_nanoseconds(void)
-{
-    std::chrono::nanoseconds ns = std::chrono::duration_cast< std::chrono::nanoseconds >(std::chrono::system_clock::now().time_since_epoch());
-    return unsigned(ns.count() % 100000000)+std::rand();
-}
 
 

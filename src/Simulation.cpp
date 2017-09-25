@@ -129,7 +129,7 @@ bool Simulation::run(void)
     std::vector<int>::iterator it = std::find(_file_output_generations_list.begin(), _file_output_generations_list.end(), _tot_gen);
     bool last_gen_is_in_list=(it != _file_output_generations_list.end());
         
-    if (!par.output_all_generations && !last_gen_is_in_list)
+    if (!par._output_all_generations && !last_gen_is_in_list)
     {
         time_prev = time(0);
         std::cout << " ------------------------------------------------------------------------------" << std::endl;
@@ -161,9 +161,9 @@ bool Simulation::ras_init_parameters(void)
     _n_pop=par._n_pop;
     population.resize(_n_pop);
     _tot_gen=0;
-    _output_all_generations=par.output_all_generations;
-    _out_prefix=par.prefix;
-    _debug=par.debug;
+    _output_all_generations=par._output_all_generations;
+    _out_prefix=par._prefix;
+    _debug=par._debug;
     _out_hap=par._out_hap;
     _out_plink=par._out_plink;
     _out_plink01=par._out_plink01;
@@ -183,15 +183,15 @@ bool Simulation::ras_init_parameters(void)
         std::cout << " Population " << ipop+1 << std::endl;
         
         population[ipop]._pop_num=ipop;
-        population[ipop]._avoid_inbreeding=par.avoid_inbreeding;
+        population[ipop]._avoid_inbreeding=par._avoid_inbreeding;
         population[ipop]._out_hap=par._out_hap; // for hap output
         population[ipop]._out_plink=par._out_plink; // for plink output
         population[ipop]._out_plink01=par._out_plink01; // for plink output
         population[ipop]._out_vcf=par._out_vcf; // for vcf output
         population[ipop]._out_interval=par._out_interval; // for interval output
-        population[ipop]._output_all_generations=par.output_all_generations;
-        population[ipop]._debug=par.debug;
-        population[ipop]._out_prefix=par.prefix;
+        population[ipop]._output_all_generations=par._output_all_generations;
+        population[ipop]._debug=par._debug;
+        population[ipop]._out_prefix=par._prefix;
         population[ipop]._MM_percent=par._MM_percent[ipop];
         population[ipop]._RM=par._RM[ipop];
 
@@ -212,7 +212,7 @@ bool Simulation::ras_init_parameters(void)
 
         ///////////////////////////
         //ras_read_gene_info ; genertion
-        int tot_gen_temp=population[ipop].ras_read_generation_info_file(par.file_gen_info[ipop]);
+        int tot_gen_temp=population[ipop].ras_read_generation_info_file(par._file_gen_info[ipop]);
         if (tot_gen_temp==0)
         {
             std::cout << "Error: The number of generations should be > 0." << std::endl;
@@ -231,14 +231,14 @@ bool Simulation::ras_init_parameters(void)
         //Number of chromosomes
         int nl=0;
         int nchr=0;
-        if (par.file_hap_name[ipop].size()>0)
+        if (par._file_hap_name[ipop].size()>0)
         {
-            nl=population[ipop].ras_read_hap_legend_sample_address_name(par.file_hap_name[ipop]);
+            nl=population[ipop].ras_read_hap_legend_sample_address_name(par._file_hap_name[ipop]);
             nchr=population[ipop]._hap_legend_sample_name.size();
         }
-        if (par.file_ref_vcf[ipop].size()>0)
+        if (par._file_ref_vcf[ipop].size()>0)
         {
-            nl=population[ipop].ras_read_file_ref_vcf_address(par.file_ref_vcf[ipop]);
+            nl=population[ipop].ras_read_file_ref_vcf_address(par._file_ref_vcf[ipop]);
             nchr=population[ipop]._ref_vcf_address.size();
         }
         population[ipop]._nchr=nchr;
@@ -285,7 +285,7 @@ bool Simulation::ras_init_parameters(void)
         
 
         // phenotypes
-        int pop_npheno = par.file_cv_info[ipop].size();
+        int pop_npheno = par._file_cv_info[ipop].size();
         
         // alloc returns
         population[ipop].ret_var_P.resize(pop_npheno, std::vector<double> (_tot_gen+1,0));
@@ -310,8 +310,8 @@ bool Simulation::ras_init_parameters(void)
 
             ///////////////////////////
             //ras_read_cv_info
-            //int ncv = population[ipop].ras_read_cv_info(par.file_cv_info[ipop][iphen],iphen);
-            int ncv = population[ipop].ras_read_cv_info_dominace_model_file(par.file_cv_info[ipop][iphen],iphen);
+            //int ncv = population[ipop].ras_read_cv_info(par._file_cv_info[ipop][iphen],iphen);
+            int ncv = population[ipop].ras_read_cv_info_dominace_model_file(par._file_cv_info[ipop][iphen],iphen);
             std::cout << "       Number of CVs                  = " << ncv << std::endl;
             if (ncv==0) return false;
             
@@ -332,7 +332,7 @@ bool Simulation::ras_init_parameters(void)
             
             ///////////////////////////
             //ras_read_cvs_address_name
-            int ncv_hapfile = population[ipop].ras_read_cvs_address_name(par.file_cvs[ipop][iphen],iphen);
+            int ncv_hapfile = population[ipop].ras_read_cvs_address_name(par._file_cvs[ipop][iphen],iphen);
             std::cout << "       Number of CV hap files         = " << ncv_hapfile << std::endl;
             if (ncv_hapfile==0) return false;
             if (nchr!=ncv_hapfile)
@@ -384,7 +384,7 @@ bool Simulation::ras_init_parameters(void)
 
         ///////////////////////////
         //read ras_read_rmap
-        long int tot_recom_map = population[ipop].ras_read_rmap(par.file_recom_map[ipop]); // we inputed just one rec map file
+        long int tot_recom_map = population[ipop].ras_read_rmap(par._file_recom_map[ipop]); // we inputed just one rec map file
         std::cout << "     Number of recombination map snps = " << tot_recom_map << std::endl;
         if (tot_recom_map==0) return false;
 
@@ -427,10 +427,10 @@ bool Simulation::ras_init_parameters(void)
         
         ///////////////////////////
         //read ras_read_file_mutation
-        if (par.file_mutation_map[ipop].size() >0)
+        if (par._file_mutation_map[ipop].size() >0)
         {
             // user inputed the mutation_map_file
-            long int tot_mutation_map = population[ipop].ras_read_file_mutation(par.file_mutation_map[ipop]);
+            long int tot_mutation_map = population[ipop].ras_read_file_mutation(par._file_mutation_map[ipop]);
             std::cout << "     Number of intervals in the mutation map file = " << tot_mutation_map << std::endl;
             if (tot_mutation_map==0) return false;
         }
@@ -454,7 +454,7 @@ bool Simulation::ras_init_parameters(void)
     }
     
     _file_output_generations_list.clear();
-    if (par.file_output_generations.size()>0)
+    if (par._file_output_generations.size()>0)
     {
         if (!read_file_output_generation_list())
         {
@@ -784,7 +784,7 @@ void Simulation::ras_save_res(void)
 bool Simulation::read_migration_file(void)
 {
     char sep=' ';
-    std::string file_name=par.file_migration;
+    std::string file_name=par._file_migration;
     std::ifstream ifile(file_name.c_str());
     if(!ifile)
     {
@@ -953,7 +953,7 @@ bool Simulation::ras_save_genotypes(int gen_num)
     if (_out_plink)
     {
         std::cout << "      Start writing in the [plink] format." << std::endl;
-        if (!ras_write_hap_to_plink_format(gen_num))
+        if (!ras_write_hap_to_plink_format(gen_num, false))
         {
             std::cout << "Error in reading and writing haplotypes!" << std::endl;
             return false;
@@ -961,7 +961,7 @@ bool Simulation::ras_save_genotypes(int gen_num)
     }
     if (_out_plink01)
     {
-        std::cout << "      Start writing in the [plink] format." << std::endl;
+        std::cout << "      Start writing in the [plink01] format." << std::endl;
         if (!ras_write_hap_to_plink_format(gen_num, true))
         {
             std::cout << "Error in reading and writing haplotypes!" << std::endl;
@@ -1011,6 +1011,12 @@ bool Simulation::ras_read_hap_legend_sample_chr(std::vector<Legend> &pops_legend
         // but .impute.hap.indv has no header!!!!
         //long int nind=CommFunc::ras_FileLineNumber(file_in_name[ichr][2])-1; // sample_file
         long int nind=CommFunc::ras_FileLineNumber(population[ipop]._hap_legend_sample_name[ichr][2]); // .impute.hap.indv
+        
+        if (nind==0)
+        {
+            std::cout << "Error in reading the [.impute.hap.indv] file." << std::endl;
+            return false;
+        }
         
         // reading legend file;
         Legend legend;
@@ -1150,7 +1156,10 @@ bool Simulation::ras_write_hap_to_plink_format(int gen_num, bool hap01)
         std::cout << "       reading hap files" << std::endl << std::flush;
         std::vector<Legend> pops_legend(_n_pop); // the population's legend file
         std::vector<Hap_SNP> pops_hap(_n_pop); // the population's hap file
-        ras_read_hap_legend_sample_chr(pops_legend, pops_hap, ichr); // for all populations
+        if (!ras_read_hap_legend_sample_chr(pops_legend, pops_hap, ichr)) // for all populations
+        {
+            return false;
+        }
         std::cout << "       done." << std::endl << std::flush;
         
         //convert hap matrix to matrix_hap according to human interval information
@@ -3105,8 +3114,8 @@ void Simulation::process_mem_usage(double& vm_usage, double& resident_set)
 // each line is generation number (starting from 1)
 bool Simulation::read_file_output_generation_list(void)
 {
-    char sep=' ';
-    std::string file_name=par.file_output_generations;
+    //char sep=' ';
+    std::string file_name=par._file_output_generations;
     std::ifstream ifile(file_name.c_str());
     if(!ifile)
     {
