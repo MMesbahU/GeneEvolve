@@ -44,6 +44,7 @@ public:
     std::vector<int> _file_output_generations_list; // 0-based list of generation for genotype outputs
     bool _out_hap;
     bool _out_plink;
+    bool _out_plink01;
     bool _out_interval;
     bool _out_vcf;
     std::vector<int> _all_active_chrs;
@@ -103,7 +104,7 @@ private:
 
     
     // dealing with plink .ped .map files
-    bool ras_write_hap_to_plink_format(int gen_num);
+    bool ras_write_hap_to_plink_format(int gen_num, bool hap01=false);
     bool ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_SNP> &pops_hap, std::vector<Legend> &pops_legend, int ichr, std::vector<std::vector<bool> > &matrix_plink_ped, plink_PED_ids &plink_ped_ids, plink_MAP &plink_map);
 
     // dealing with interval (.int) file

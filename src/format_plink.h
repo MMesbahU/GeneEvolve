@@ -81,5 +81,6 @@ public:
 namespace format_plink
 {
     bool write_ped_map(std::string file_out_name, std::vector<std::vector<bool> > &matrix_plink_ped, plink_PED_ids &plink_ped_ids, plink_MAP &plink_map);
+    bool write_ped01_map(std::string file_out_name, std::vector<std::vector<bool> > &matrix_plink_ped, plink_PED_ids &plink_ped_ids, plink_MAP &plink_map);
 }
 

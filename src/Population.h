@@ -271,6 +271,7 @@ public:
     std::string prefix;
     bool _out_hap;
     bool _out_plink;
+    bool _out_plink01;
     bool _out_vcf;
     bool _out_interval;
     bool output_all_generations;
@@ -282,6 +283,7 @@ public:
         avoid_inbreeding=false;
         _out_hap=false;
         _out_plink=false;
+        _out_plink01=false;
         _out_interval=false;
         output_all_generations=false;
         prefix="out";
@@ -297,6 +299,7 @@ public:
         avoid_inbreeding=false;
         _out_hap=false;
         _out_plink=false;
+        _out_plink01=false;
         _out_interval=false;
         output_all_generations=false;
         prefix="out";
@@ -358,6 +361,7 @@ public:
     bool _avoid_inbreeding;
     bool _out_hap;
     bool _out_plink;
+    bool _out_plink01;
     bool _out_vcf;
     bool _out_interval;// for generating interval output
     bool _output_all_generations;

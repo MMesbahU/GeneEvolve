@@ -166,6 +166,7 @@ bool Simulation::ras_init_parameters(void)
     _debug=par.debug;
     _out_hap=par._out_hap;
     _out_plink=par._out_plink;
+    _out_plink01=par._out_plink01;
     _out_vcf=par._out_vcf;
     _out_interval=par._out_interval;
     _vt_type = par._vt_type;
@@ -185,6 +186,7 @@ bool Simulation::ras_init_parameters(void)
         population[ipop]._avoid_inbreeding=par.avoid_inbreeding;
         population[ipop]._out_hap=par._out_hap; // for hap output
         population[ipop]._out_plink=par._out_plink; // for plink output
+        population[ipop]._out_plink01=par._out_plink01; // for plink output
         population[ipop]._out_vcf=par._out_vcf; // for vcf output
         population[ipop]._out_interval=par._out_interval; // for interval output
         population[ipop]._output_all_generations=par.output_all_generations;
@@ -957,6 +959,15 @@ bool Simulation::ras_save_genotypes(int gen_num)
             return false;
         }
     }
+    if (_out_plink01)
+    {
+        std::cout << "      Start writing in the [plink] format." << std::endl;
+        if (!ras_write_hap_to_plink_format(gen_num, true))
+        {
+            std::cout << "Error in reading and writing haplotypes!" << std::endl;
+            return false;
+        }
+    }
     
     if (_out_vcf)
     {
@@ -1129,7 +1140,7 @@ bool Simulation::ras_convert_pop_to_indv(int ipop, std::vector<unsigned long int
 ///////////////////////////////////////////////////////////////////////////////////////////
 // plink
 
-bool Simulation::ras_write_hap_to_plink_format(int gen_num)
+bool Simulation::ras_write_hap_to_plink_format(int gen_num, bool hap01)
 {
     int n_chr=population[0].h[0].chr.size();
     for (int ichr=0; ichr<n_chr; ichr++) // for chr
@@ -1162,7 +1173,15 @@ bool Simulation::ras_write_hap_to_plink_format(int gen_num)
             // writing the hap to plink
             std::cout << "      writing" << std::endl << std::flush;
             std::string outfile_name=_out_prefix +".pop"+ std::to_string(ipop+1) + ".gen" + std::to_string(gen_num) + ".chr" +  std::to_string(_all_active_chrs[ichr]);
-            format_plink::write_ped_map(outfile_name, matrix_plink_ped, plink_ped_ids, plink_map);
+            if (hap01)
+            {
+                format_plink::write_ped01_map(outfile_name, matrix_plink_ped, plink_ped_ids, plink_map);
+            }
+            else
+            {
+                format_plink::write_ped_map(outfile_name, matrix_plink_ped, plink_ped_ids, plink_map);
+            }
+            
         }
         std::cout << "    --------------------------------------------------------------" << std::endl;
     }
@@ -1327,6 +1346,7 @@ bool Simulation::ras_write_hap_to_interval_format(int gen_num)
                     for (int ip=0; ip<npart; ip++)
                     {
                         part p=population[ipop].h[ih].chr[ichr].Hap[ihap][ip];
+                        //file_out << "g" << gen_num << "_" << population[ipop].h[ih].ID+1 << sep; // starting from 1
                         file_out << population[ipop].h[ih].ID+1 << sep; // starting from 1
                         file_out << _all_active_chrs[ichr] << sep;
                         file_out << ihap << sep;

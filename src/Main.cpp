@@ -187,6 +187,7 @@ void helpFile()
     printf("        --prefix                 : [out]\n");
     printf("        --out_hap                : [ON]   ->  [On] means output in the [hap] format.\n");
     printf("        --out_plink              : [Off]  ->  [On] means output in the [plink] format.\n");
+    printf("        --out_plink01            : [Off]  ->  [On] means output in the [plink01] format.\n");
     printf("        --out_vcf                : [Off]  ->  [On] means output in the [vcf] format.\n");
     printf("        --out_interval           : [Off]  ->  [On] means output in the [interval] format.\n");
     printf("        --output_all_generations : [Off]\n");
@@ -311,6 +312,9 @@ bool parameter_proc(std::vector<std::string> &vec_arg, Parameters &par)
         }
         else if(vec_arg[i]=="--out_plink"){
             par._out_plink=true;
+        }
+        else if(vec_arg[i]=="--out_plink01"){
+            par._out_plink01=true;
         }
         else if(vec_arg[i]=="--out_vcf"){
             par._out_vcf=true;
@@ -608,7 +612,7 @@ bool parameter_print(Parameters &par)
     }
 
     std::cout << "  Immigration parameters" << std::endl;
-    std::cout << "      --file_migration        : [" << par.file_migration << "]" << std::endl;
+    std::cout << "      --file_migration         : [" << par.file_migration << "]" << std::endl;
 
     std::cout << "  Environmental effects specific to each population (for each phenotype)" << std::endl;
     int pop_npheno=par.file_cv_info[0].size();
@@ -624,10 +628,11 @@ bool parameter_print(Parameters &par)
     std::cout << "      --prefix                 : [" << par.prefix << "]" << std::endl;
     std::cout << "      --out_hap                : [" << (par._out_hap ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_plink              : [" << (par._out_plink ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --out_plink01            : [" << (par._out_plink01 ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_vcf                : [" << (par._out_vcf ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_interval           : [" << (par._out_interval ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --output_all_generations : [" << (par.output_all_generations ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --file_output_generations : [" << par.file_output_generations << "]" << std::endl;
+    std::cout << "      --file_output_generations: [" << par.file_output_generations << "]" << std::endl;
     std::cout << std::endl;
     return true;
 }
