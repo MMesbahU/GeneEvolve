@@ -112,7 +112,7 @@ private:
     
     // dealing with vcf files
     bool ras_write_vcf_to_vcf_format(int gen_num);
-    bool ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr);
+    bool ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int gen_num, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr);
     bool ras_read_vcf_pops_chr(std::vector<vcf_structure> &vcf_structure_pops, int ichr);
 
     

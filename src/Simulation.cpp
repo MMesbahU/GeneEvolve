@@ -1151,8 +1151,13 @@ bool Simulation::ras_write_hap_to_plink_format(int gen_num)
             std::vector<std::vector<bool> > matrix_plink_ped;
             plink_PED_ids plink_ped_ids;
             plink_MAP plink_map;
-            ras_convert_interval_to_format_plink(ipop, pops_hap, pops_legend, ichr, matrix_plink_ped, plink_ped_ids, plink_map);
-            
+            bool ret=true;
+            ret = ras_convert_interval_to_format_plink(ipop, pops_hap, pops_legend, ichr, matrix_plink_ped, plink_ped_ids, plink_map);
+            if (!ret)
+            {
+                std::cout << "Error: in ras_convert_interval_to_format_plink." << std::endl << std::flush;
+                return false;
+            }
             
             // writing the hap to plink
             std::cout << "      writing" << std::endl << std::flush;
@@ -1374,7 +1379,7 @@ bool Simulation::ras_write_vcf_to_vcf_format(int gen_num)
             std::cout << "      converting interval format to vcf file structure ..." << std::endl << std::flush;
             
             vcf_structure vcf_out;
-            if(!ras_convert_interval_to_vcf_structure(vcf_out, ipop, ichr, vcf_structure_allpops_chr))
+            if(!ras_convert_interval_to_vcf_structure(vcf_out, gen_num, ipop, ichr, vcf_structure_allpops_chr))
                 return false;
             
             // writing the hap to plink
@@ -1391,7 +1396,7 @@ bool Simulation::ras_write_vcf_to_vcf_format(int gen_num)
 
 
 /// for one chr in one population
-bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr)
+bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int gen_num, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr)
 {
     // convert hap0 matrix to matrix_hap according to Human interval information
     unsigned long int n_human=population[ipop].h.size();
@@ -1428,7 +1433,7 @@ bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, i
     
     for (unsigned long int ih=0; ih<n_human; ih++) // for humans
     {
-        vcf_out.SAMPLES[ih] = "h" + std::to_string(population[ipop].h[ih].ID);
+        vcf_out.SAMPLES[ih] = "g" + std::to_string(gen_num) + "_" + std::to_string(population[ipop].h[ih].ID);
         for (int ihaps=0; ihaps<n_chromatid; ihaps++) // for haps, 2
         {
             int n_parts=(int)population[ipop].h[ih].chr[ichr].Hap[ihaps].size();
