@@ -170,7 +170,9 @@ bool Simulation::ras_init_parameters(void)
     _out_vcf=par._out_vcf;
     _out_interval=par._out_interval;
     _vt_type = par._vt_type;
-    
+    _ref_is_hap = par._ref_is_hap;
+    _ref_is_vcf = par._ref_is_vcf;
+
     
     _Pop_info_prev_gen.resize(_n_pop); // to save mating_value for the previous generation, for each population
     _gen0_SV_var.resize(_n_pop);
@@ -940,44 +942,74 @@ bool Simulation::ras_save_genotypes(int gen_num)
 {
     std::cout << " saving genotypes" << std::endl;
     
-    if (_out_hap)
+    if (_ref_is_vcf)
     {
-        std::cout << "      Start writing in the [hap] format." << std::endl;
-        if (!ras_write_hap_legend_sample(gen_num))
+        if (_out_vcf)
         {
-            std::cout << "Error in reading and writing haplotypes!" << std::endl;
-            return false;
+            std::cout << "      Start writing in the [vcf] format." << std::endl;
+            if (!ras_write_vcf_to_vcf_format(gen_num))
+            {
+                std::cout << "Error in reading and writing vcf files!" << std::endl;
+                return false;
+            }
         }
-    }
+        if (_out_plink)
+        {
+            std::cout << "      Start writing in the [plink] format." << std::endl;
+            if (!ras_write_vcf_to_plink_format(gen_num, false))
+            {
+                std::cout << "Error in reading and writing haplotypes!" << std::endl;
+                return false;
+            }
+        }
+        if (_out_plink01)
+        {
+            std::cout << "      Start writing in the [plink01] format." << std::endl;
+            if (!ras_write_vcf_to_plink_format(gen_num, true))
+            {
+                std::cout << "Error in reading and writing haplotypes!" << std::endl;
+                return false;
+            }
+        }
 
-    if (_out_plink)
-    {
-        std::cout << "      Start writing in the [plink] format." << std::endl;
-        if (!ras_write_hap_to_plink_format(gen_num, false))
-        {
-            std::cout << "Error in reading and writing haplotypes!" << std::endl;
-            return false;
-        }
-    }
-    if (_out_plink01)
-    {
-        std::cout << "      Start writing in the [plink01] format." << std::endl;
-        if (!ras_write_hap_to_plink_format(gen_num, true))
-        {
-            std::cout << "Error in reading and writing haplotypes!" << std::endl;
-            return false;
-        }
+
     }
     
-    if (_out_vcf)
+    
+    if (_ref_is_hap)
     {
-        std::cout << "      Start writing in the [vcf] format." << std::endl;
-        if (!ras_write_vcf_to_vcf_format(gen_num))
+        if (_out_hap)
         {
-            std::cout << "Error in reading and writing vcf files!" << std::endl;
-            return false;
+            std::cout << "      Start writing in the [hap] format." << std::endl;
+            if (!ras_write_hap_legend_sample(gen_num))
+            {
+                std::cout << "Error in reading and writing haplotypes!" << std::endl;
+                return false;
+            }
         }
+        
+        if (_out_plink)
+        {
+            std::cout << "      Start writing in the [plink] format." << std::endl;
+            if (!ras_write_hap_to_plink_format(gen_num, false))
+            {
+                std::cout << "Error in reading and writing haplotypes!" << std::endl;
+                return false;
+            }
+        }
+        if (_out_plink01)
+        {
+            std::cout << "      Start writing in the [plink01] format." << std::endl;
+            if (!ras_write_hap_to_plink_format(gen_num, true))
+            {
+                std::cout << "Error in reading and writing haplotypes!" << std::endl;
+                return false;
+            }
+        }
+
     }
+    
+    
 
     // interval combined by other parameters
     if (_out_interval)
@@ -1001,6 +1033,8 @@ bool Simulation::ras_save_genotypes(int gen_num)
 // we should read all the populations because of migration
 // pops_legend.size = _n_pop
 // pops_hap.size = _n_pop
+// fill in pops_legend[ipop] and pops_hap[ipop]
+
 bool Simulation::ras_read_hap_legend_sample_chr(std::vector<Legend> &pops_legend, std::vector<Hap_SNP> &pops_hap, int ichr)
 {
     for (int ipop=0; ipop<_n_pop; ipop++)
@@ -1145,6 +1179,10 @@ bool Simulation::ras_convert_pop_to_indv(int ipop, std::vector<unsigned long int
 ///////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////
 // plink
+
+// 1- ras_read_hap_legend_sample_chr --> fill in pops_legend[ipop] and pops_hap[ipop]
+// 2- ras_convert_interval_to_format_plink
+// 3- format_plink::write_ped_map
 
 bool Simulation::ras_write_hap_to_plink_format(int gen_num, bool hap01)
 {
@@ -1312,6 +1350,161 @@ bool Simulation::ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_
 
 
 
+bool Simulation::ras_write_vcf_to_plink_format(int gen_num, bool hap01)
+{
+    int n_chr=population[0].h[0].chr.size();
+    for (int ichr=0; ichr<n_chr; ichr++) // for chr
+    {
+        // reading vcf files for all populations. Because of migration we should read all the pops
+        std::cout << "    Start chr " << _all_active_chrs[ichr] << std::endl << std::flush;
+        std::cout << "       reading vcf files ..." << std::endl << std::flush;
+        
+        std::vector<vcf_structure> vcf_structure_allpops_chr(_n_pop); // for all populations
+        // for all populations
+        if (!ras_read_vcf_pops_chr(vcf_structure_allpops_chr, ichr))
+        {
+            return false;
+        }
+        std::cout << "       done." << std::endl << std::flush;
+
+        
+        //convert hap matrix to matrix_hap according to human interval information
+        for (int ipop=0; ipop<_n_pop; ipop++) // for pops
+        {
+            std::cout << "    --Population: " << (ipop+1) << std::endl;
+            
+            std::cout << "      converting to plink file matrix" << std::endl << std::flush;
+            std::vector<std::vector<bool> > matrix_plink_ped;
+            plink_PED_ids plink_ped_ids;
+            plink_MAP plink_map;
+            bool ret=true;
+            ret = ras_convert_interval_from_vcf_to_plink(matrix_plink_ped, plink_ped_ids, plink_map, ipop, ichr, gen_num, vcf_structure_allpops_chr);
+            if (!ret)
+            {
+                std::cout << "Error: in ras_convert_interval_from_vcf_to_plink." << std::endl << std::flush;
+                return false;
+            }
+            
+            // writing the hap to plink
+            std::cout << "      writing" << std::endl << std::flush;
+            std::string outfile_name=_out_prefix +".pop"+ std::to_string(ipop+1) + ".gen" + std::to_string(gen_num) + ".chr" +  std::to_string(_all_active_chrs[ichr]);
+            if (hap01)
+            {
+                format_plink::write_ped01_map(outfile_name, matrix_plink_ped, plink_ped_ids, plink_map);
+            }
+            else
+            {
+                format_plink::write_ped_map(outfile_name, matrix_plink_ped, plink_ped_ids, plink_map);
+            }
+            
+        }
+        std::cout << "    --------------------------------------------------------------" << std::endl;
+    }
+    return true;
+}
+
+
+
+//inputs: ipop, ichr, gen_num, vcf_structure_allpops_chr
+//output: matrix_plink_ped, plink_ped_ids, plink_map
+bool Simulation::ras_convert_interval_from_vcf_to_plink
+(std::vector<std::vector<bool> > &matrix_plink_ped, // output
+ plink_PED_ids &plink_ped_ids, // output
+ plink_MAP &plink_map, // output
+ int ipop,
+ int ichr,
+ int gen_num,
+ std::vector<vcf_structure> &vcf_structure_allpops_chr // input
+)
+{
+    unsigned long int n_human=population[ipop].h.size();
+    unsigned long int nsnp=vcf_structure_allpops_chr[ipop].ID.size();
+    int n_chromatid = population[ipop].h[0].chr[ichr].Hap.size(); // =2
+    std::cout << "      n_human=" << n_human << std::endl;
+
+    
+    std::cout << "      Allocating memory ..." << std::flush;
+    try
+    {
+        matrix_plink_ped.clear();
+        
+        matrix_plink_ped.resize(n_human, std::vector<bool> (nsnp*n_chromatid, false) );
+        plink_ped_ids.alloc(n_human); // FID IID PID MID sex phen
+        plink_map.alloc(nsnp);
+        std::cout << "      done." << std::endl;
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Standard exception: " << e.what() << std::endl;
+        return false;
+    }
+    
+    
+    
+    for (unsigned long int ih=0; ih<n_human; ih++) // for humans
+    {
+        //if(ih % 1000==0) cout << "ih=" << ih << endl << flush;
+        for (int ihaps=0; ihaps<n_chromatid; ihaps++) // for 2 haps
+        {
+            int n_parts=(int)population[ipop].h[ih].chr[ichr].Hap[ihaps].size();
+            for (int ip=0; ip<n_parts; ip++) // for parts
+            {
+                part p=population[ipop].h[ih].chr[ichr].Hap[ihaps][ip];
+                int root_pop=p.root_population;
+                for (unsigned long int ii=0; ii<nsnp; ii++)// for SNPs
+                {
+                    if (p.check_interval(vcf_structure_allpops_chr[root_pop].POS[ii]))
+                    {
+                        if (p.hap_index >= vcf_structure_allpops_chr[root_pop].data.size())// nhaps
+                        {
+                            std::cout << "Error: p.hap_index=" << p.hap_index << " is not in range, ih=" << ih << std::endl;
+                            return false;
+                        }
+                        // check mutation
+                        std::vector<unsigned long int>::iterator it = find(p.mutation_pos.begin(), p.mutation_pos.end(), vcf_structure_allpops_chr[root_pop].POS[ii]);
+                        if (it != p.mutation_pos.end()) // mutation
+                            matrix_plink_ped[ih][2*ii+ihaps] = !vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
+                        else // no mutation
+                            matrix_plink_ped[ih][2*ii+ihaps] = vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    
+    
+    // fill plink_PED_ids class
+    for (unsigned long int ih=0; ih<n_human; ih++) // for humans
+    {
+        // FID IID PID MID
+        // all IDs are +1, since we want IDs>=1 (in c++, indexes are zero-based)
+        // in plink zero means missing value
+        plink_ped_ids.FID[ih]  = std::to_string(population[ipop].h[ih].ID_Father+1); // letting ID_Father as FID
+        plink_ped_ids.IID[ih]  = std::to_string(population[ipop].h[ih].ID+1);
+        plink_ped_ids.PID[ih]  = std::to_string(population[ipop].h[ih].ID_Father+1);
+        plink_ped_ids.MID[ih]  = std::to_string(population[ipop].h[ih].ID_Mother+1);
+        plink_ped_ids.sex[ih]  = population[ipop].h[ih].sex; // 1=male, 2=female
+        plink_ped_ids.phen[ih] = -9; // we can also let them -9
+    }
+    
+    // fill plink_MAP class
+    for (unsigned long int i=0; i<nsnp; i++) // for SNPs
+    {
+        plink_map.chr[i] = std::to_string(_all_active_chrs[ichr]);
+        plink_map.rs[i]  = vcf_structure_allpops_chr[ipop].ID[i];
+        plink_map.cM[i]  = 0;
+        plink_map.pos[i] = vcf_structure_allpops_chr[ipop].POS[i];
+        plink_map.al0[i] = vcf_structure_allpops_chr[ipop].REF[i];
+        plink_map.al1[i] = vcf_structure_allpops_chr[ipop].ALT[i];
+    }
+    
+    return true;
+}
+
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////
 // interval file format (for checking the IBDs)
@@ -1470,7 +1663,7 @@ bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, i
             {
                 part p=population[ipop].h[ih].chr[ichr].Hap[ihaps][ip];
                 int root_pop=p.root_population;
-                for (unsigned long int ii=0; ii<nsnp; ii++) // for all SNPs
+                for (unsigned long int ii=0; ii<nsnp; ii++) // for SNPs
                 {
                     if (p.check_interval(vcf_structure_allpops_chr[root_pop].POS[ii]))
                     {

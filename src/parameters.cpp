@@ -364,9 +364,9 @@ bool Parameters::check(void)
     }
     
     //_seed
-    if (_seed<0)
+    if (_seed<=0)
     {
-        std::cout << "Eroor: the parameter [--seed] can't be negative." << std::endl;
+        std::cout << "Eroor: the parameter [--seed] should be positive." << std::endl;
     }
     
     //check migration

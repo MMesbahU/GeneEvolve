@@ -58,7 +58,9 @@ public:
     std::vector<double> _gamma; // for each phenotype and all the populations
     std::vector<double> _gen0_SV_var;
     std::vector<double> _gen0_SV_mean;
-    
+    bool _ref_is_hap;
+    bool _ref_is_vcf;
+
     
 private:
     bool ras_init_parameters(void);
@@ -108,6 +110,8 @@ private:
     // dealing with plink .ped .map files
     bool ras_write_hap_to_plink_format(int gen_num, bool hap01=false);
     bool ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_SNP> &pops_hap, std::vector<Legend> &pops_legend, int ichr, std::vector<std::vector<bool> > &matrix_plink_ped, plink_PED_ids &plink_ped_ids, plink_MAP &plink_map);
+    bool ras_write_vcf_to_plink_format(int gen_num, bool hap01);
+    bool ras_convert_interval_from_vcf_to_plink(std::vector<std::vector<bool> > &matrix_plink_ped, plink_PED_ids &plink_ped_ids, plink_MAP &plink_map, int ipop, int ichr, int gen_num, std::vector<vcf_structure> &vcf_structure_allpops_chr);
 
     // dealing with interval (.int) file
     bool ras_write_hap_to_interval_format(int gen_num);

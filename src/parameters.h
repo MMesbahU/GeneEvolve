@@ -28,9 +28,9 @@ class Parameters
     std::vector<std::vector<double> > _lambda;            //  selection value coefficient=1
     std::vector<double> _MM_percent;                      // for each population
     std::vector<bool> _RM;                                // for each population
+    int _vt_type;                                         // type of vertical transition (familial effect)
     bool _ref_is_hap;
     bool _ref_is_vcf;
-    int _vt_type;                                         // type of vertical transition (familial effect)
     
     // migration matrix
     std::vector<double> _gamma;                           // for each phenotype and all populations,  _environmental_effects_specific_to_each_population=0
