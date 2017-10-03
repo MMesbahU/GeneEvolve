@@ -225,7 +225,7 @@ bool Parameters::check(void)
     unsigned nphen=_file_cv_info[0].size();
     
     //cehck the number of populations in the inputted options
-    for (unsigned ipop=0; ipop< _n_pop; ipop++)
+    for (int ipop=0; ipop< _n_pop; ipop++)
     {
         if (_file_gen_info[ipop].size()==0)
         {

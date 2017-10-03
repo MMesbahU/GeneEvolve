@@ -1655,7 +1655,7 @@ bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, i
     
     for (unsigned long int ih=0; ih<n_human; ih++) // for humans
     {
-        vcf_out.SAMPLES[ih] = "g" + std::to_string(gen_num) + "_" + std::to_string(population[ipop].h[ih].ID);
+        vcf_out.SAMPLES[ih] = "g" + std::to_string(gen_num) + "_" + std::to_string(population[ipop].h[ih].ID+1);
         for (int ihaps=0; ihaps<n_chromatid; ihaps++) // for haps, 2
         {
             int n_parts=(int)population[ipop].h[ih].chr[ichr].Hap[ihaps].size();
