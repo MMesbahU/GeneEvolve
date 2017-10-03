@@ -13,9 +13,9 @@ bool format_vcf::write_vcf_file(std::string file_out_name, vcf_structure &vcf_st
         return false;
     }
 
-    int nhap = vcf_st.data.size();
-    int nsnp = vcf_st.data[0].size();
-    int nind = vcf_st.SAMPLES.size();
+    unsigned nhap = vcf_st.data.size();
+    unsigned nsnp = vcf_st.data[0].size();
+    unsigned nind = vcf_st.SAMPLES.size();
     if (vcf_st.POS.size()!=nsnp)
     {
         std::cout << "Error: file [" + file_out_name + "] has problem." << std::endl;
@@ -28,14 +28,14 @@ bool format_vcf::write_vcf_file(std::string file_out_name, vcf_structure &vcf_st
     }
     
     // write meta lines, starts with ##
-    for (int i=0; i<vcf_st.meta_lines.size(); i++)
+    for (unsigned i=0; i<vcf_st.meta_lines.size(); i++)
     {
         outfile << vcf_st.meta_lines[i] << std::endl;
     }
     
     // create head line, starts with #
     outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
-    for (int iind=0; iind<nind; iind++)
+    for (unsigned iind=0; iind<nind; iind++)
     {
         outfile << "\t" << vcf_st.SAMPLES[iind];
     }
@@ -43,7 +43,7 @@ bool format_vcf::write_vcf_file(std::string file_out_name, vcf_structure &vcf_st
 
     
     // data
-    for (int isnp=0; isnp<nsnp; isnp++)
+    for (unsigned isnp=0; isnp<nsnp; isnp++)
     {
         std::string str_QUAL=".";
         if (vcf_st.QUAL[isnp]!=-1)
