@@ -129,7 +129,7 @@ bool Simulation::run(void)
     //std::vector<int>::iterator it = std::find(_file_output_generations_list.begin(), _file_output_generations_list.end(), _tot_gen);
     //bool last_gen_is_in_list=(it != _file_output_generations_list.end());
         
-    if (_file_output_generations_list.length()==0)
+    if (_file_output_generations_list.size()==0)
     {
         time_prev = time(0);
         std::cout << " ------------------------------------------------------------------------------" << std::endl;
