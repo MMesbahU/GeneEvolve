@@ -164,7 +164,7 @@ void helpFile()
     printf("        --vf                     : [0]    ->  variance of familial effect\n");
     printf("        --omega                  : [1]    ->  coefficient for mating value\n");
     printf("        --lambda                 : [1]    ->  coefficient for selection value\n");
-    printf("        --beta                   : [1]    ->  coefficient for familial effect\n");
+    //printf("        --beta                   : [1]    ->  coefficient for familial effect\n");
 
     std::cout << std::endl;
     printf(" --------- Immigration parameters\n");
@@ -175,19 +175,21 @@ void helpFile()
     printf("        --gamma                  : [0]\n");
     
     std::cout << std::endl;
-    printf(" --------- Other parameters\n");
-    printf("        --seed                   : [0]    ->  can be any passitive number.\n");
-    printf("        --avoid_inbreeding       : [Off]  ->  [On] means no inbreeding.\n");
-    printf("        --debug                  : [Off]\n");
-    printf("        --prefix                 : [out]\n");
-    printf("        --out_hap                : [ON]   ->  [On] means output in the [hap] format.\n");
+    printf(" --------- Output parameters\n");
+    printf("        --out_hap                : [Off]  ->  [On] means output in the [hap] format.\n");
     printf("        --out_plink              : [Off]  ->  [On] means output in the [plink] format.\n");
     printf("        --out_plink01            : [Off]  ->  [On] means output in the [plink01] format.\n");
     printf("        --out_vcf                : [Off]  ->  [On] means output in the [vcf] format.\n");
     printf("        --out_interval           : [Off]  ->  [On] means output in the [interval] format.\n");
-    printf("        --output_all_generations : [Off]\n");
     printf("        --file_output_generations: [filename]\n");
     printf("          A file contating the list of the generations for genotype output. Each generation number should be in a line.\n");
+    
+    std::cout << std::endl;
+    printf(" --------- Other parameters\n");
+    printf("        --prefix                 : [out]\n");
+    printf("        --avoid_inbreeding       : [Off]  ->  [On] means no inbreeding.\n");
+    printf("        --seed                   : [0]    ->  can be any passitive number.\n");
+    printf("        --debug                  : [Off]\n");
     
 
     printf("\n Please visit <https://github.com/rtahmasbi/GeneEvolve> for detailed documentation.\n\n");

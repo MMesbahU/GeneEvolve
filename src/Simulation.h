@@ -42,7 +42,6 @@ public:
     //_tot_gen rows, _n_pop^2 cols: each column is the the elements of the transition matrix in format: [a11 a12 a13 ... a21 a22 a23 ...]
     std::vector<std::vector<double> > migration_mat_gen;
     std::string _out_prefix;
-    bool _output_all_generations;
     std::vector<int> _file_output_generations_list; // 0-based list of generation for genotype outputs
     bool _out_hap;
     bool _out_plink;

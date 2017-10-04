@@ -261,7 +261,6 @@ public:
     bool _out_plink01;
     bool _out_vcf;
     bool _out_interval;// for generating interval output
-    bool _output_all_generations;
     bool _debug;
     std::string _out_prefix;
     double _MM_percent; // Random mating percent (inds who have 2 spouses)

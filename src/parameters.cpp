@@ -132,9 +132,6 @@ bool Parameters::read(std::vector<std::string> &vec_arg)
         else if(vec_arg[i]=="--out_interval"){
             _out_interval=true;
         }
-        else if(vec_arg[i]=="--output_all_generations"){
-            _output_all_generations=true;
-        }
         else if(vec_arg[i]=="--file_output_generations"){
             _file_output_generations=vec_arg[++i];
         }
@@ -431,18 +428,20 @@ bool Parameters::print(void)
         std::cout << "      --gamma                  : [" << _gamma[j] << "]" << std::endl;
     }
     
-    std::cout << "  Other parameters" << std::endl;
-    std::cout << "      --seed                   : [" << _seed << "]" << std::endl;
-    std::cout << "      --avoid_inbreeding       : [" << (_avoid_inbreeding ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --debug                  : [" << (_debug ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --prefix                 : [" << _prefix << "]" << std::endl;
+    std::cout << "  Output parameters" << std::endl;
     std::cout << "      --out_hap                : [" << (_out_hap ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_plink              : [" << (_out_plink ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_plink01            : [" << (_out_plink01 ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_vcf                : [" << (_out_vcf ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_interval           : [" << (_out_interval ? "On" : "Off") << "]" << std::endl;
-    std::cout << "      --output_all_generations : [" << (_output_all_generations ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --file_output_generations: [" << _file_output_generations << "]" << std::endl;
+
+    
+    std::cout << "  Other parameters" << std::endl;
+    std::cout << "      --prefix                 : [" << _prefix << "]" << std::endl;
+    std::cout << "      --avoid_inbreeding       : [" << (_avoid_inbreeding ? "On" : "Off") << "]" << std::endl;
+    std::cout << "      --seed                   : [" << _seed << "]" << std::endl;
+    std::cout << "      --debug                  : [" << (_debug ? "On" : "Off") << "]" << std::endl;
     std::cout << std::endl;
     return true;
 }

@@ -50,7 +50,6 @@ class Parameters
     bool _out_plink01;
     bool _out_vcf;
     bool _out_interval;
-    bool _output_all_generations;
     std::string _file_output_generations;
     
     // default values
@@ -62,7 +61,6 @@ class Parameters
         _out_plink01=false;
         _out_interval=false;
         _out_vcf=false;
-        _output_all_generations=false;
         _prefix="out";
         _help=false;
         _debug=false;
@@ -81,7 +79,6 @@ class Parameters
         _out_plink01=false;
         _out_interval=false;
         _out_vcf=false;
-        _output_all_generations=false;
         _prefix="out";
         _help=false;
         _debug=false;

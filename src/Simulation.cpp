@@ -126,10 +126,10 @@ bool Simulation::run(void)
     
 
     // read the hap file and write the output for the last generation
-    std::vector<int>::iterator it = std::find(_file_output_generations_list.begin(), _file_output_generations_list.end(), _tot_gen);
-    bool last_gen_is_in_list=(it != _file_output_generations_list.end());
+    //std::vector<int>::iterator it = std::find(_file_output_generations_list.begin(), _file_output_generations_list.end(), _tot_gen);
+    //bool last_gen_is_in_list=(it != _file_output_generations_list.end());
         
-    if (!par._output_all_generations && !last_gen_is_in_list)
+    if (_file_output_generations_list.length()==0)
     {
         time_prev = time(0);
         std::cout << " ------------------------------------------------------------------------------" << std::endl;
@@ -161,7 +161,6 @@ bool Simulation::ras_init_parameters(void)
     _n_pop=par._n_pop;
     population.resize(_n_pop);
     _tot_gen=0;
-    _output_all_generations=par._output_all_generations;
     _out_prefix=par._prefix;
     _debug=par._debug;
     _out_hap=par._out_hap;
@@ -191,7 +190,6 @@ bool Simulation::ras_init_parameters(void)
         population[ipop]._out_plink01=par._out_plink01; // for plink output
         population[ipop]._out_vcf=par._out_vcf; // for vcf output
         population[ipop]._out_interval=par._out_interval; // for interval output
-        population[ipop]._output_all_generations=par._output_all_generations;
         population[ipop]._debug=par._debug;
         population[ipop]._out_prefix=par._prefix;
         population[ipop]._MM_percent=par._MM_percent[ipop];
@@ -1887,11 +1885,7 @@ bool Simulation::sim_next_generation(int gen_num)
     ///////////////////////////////////////////////////////
     //save genotypes
     std::vector<int>::iterator it = std::find (_file_output_generations_list.begin(), _file_output_generations_list.end(), gen_num);
-    if(_output_all_generations) // for all generations
-    {
-        ras_save_genotypes(gen_num);
-    }
-    else if (it != _file_output_generations_list.end()) // write some generations
+    if (it != _file_output_generations_list.end()) // write some generations
     {
         ras_save_genotypes(gen_num);
     }
