@@ -394,7 +394,7 @@ bool Simulation::ras_init_parameters(void)
         population[ipop].ras_compute_recom_prob();
         
         
-        
+        /*
         ///////////////////////////
         //check CVs are in genomic map or not
         for (int iphen=0; iphen<pop_npheno; iphen++)
@@ -424,7 +424,9 @@ bool Simulation::ras_init_parameters(void)
             }
 
         }
-        
+        */
+         
+         
         ///////////////////////////
         //read ras_read_file_mutation
         if (par._file_mutation_map[ipop].size() >0)
