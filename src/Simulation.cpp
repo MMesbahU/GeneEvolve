@@ -1636,7 +1636,8 @@ bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, i
     vcf_out.REF    = vcf_structure_allpops_chr[ipop].REF;
     vcf_out.ALT    = vcf_structure_allpops_chr[ipop].ALT;
     vcf_out.QUAL   = vcf_structure_allpops_chr[ipop].QUAL;
-    vcf_out.FILTER = std::vector<std::string> (nsnp,".");
+    //vcf_out.FILTER = std::vector<std::string> (nsnp,".");
+    vcf_out.FILTER = vcf_structure_allpops_chr[ipop].FILTER;
     vcf_out.INFO   = std::vector<std::string> (nsnp,".");
     vcf_out.FORMAT = std::vector<std::string> (nsnp,"GT");
     std::cout << "      done." << std::endl;
