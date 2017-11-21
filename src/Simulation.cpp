@@ -1647,6 +1647,7 @@ bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, i
     std::time_t t = std::time(NULL);
     char mbstr[100];
     std::strftime(mbstr, sizeof(mbstr), "%Y%m%d", std::localtime(&t));
+    hline.push_back("##Phasing=phased");
     hline.push_back("##CreatedBy=GeneEvolve");
     hline.push_back("##fileDate=" + std::string(mbstr));
     hline.push_back("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");

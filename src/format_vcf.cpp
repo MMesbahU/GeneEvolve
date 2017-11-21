@@ -226,7 +226,7 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
         std::string refAllele = record.getRefStr();
         std::string altAllele = record.getAltStr();
         float qual            = record.getQual();
-        std::string filter    = ""; //record.getFilter();
+        std::string filter    = record.getFilter().getString();
         std::string info      = ""; //record.getInfo();
         std::string format    = ""; //record.getFilter();
         std::string currID    = cno + ":" + std::to_string(bp);
