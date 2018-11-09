@@ -10,10 +10,10 @@ bool format_hap::write_hap(Hap_SNP &hap_snp, std::string file_out_name)
     std::string f_out=file_out_name + ".hap";
     unsigned long int nhap=hap_snp.hap.size();
     unsigned long int nsnp=hap_snp.hap[0].size();
-    
+
     std::ofstream outfile;
     outfile.open(f_out.c_str());
-    
+
     for (unsigned long int k=0; k<nsnp; k++) // for snps
     {
         if (k%1000==0) std::cout << "\r      " << k << " of " << nsnp << " wrote ..." << std::flush;
@@ -38,17 +38,17 @@ bool format_hap::write_indv(std::vector<unsigned long int> &indv_id, std::string
 {
     std::string f_out=file_out_name + ".indv";
     unsigned long int nind=indv_id.size();
-    
+
     std::ofstream outfile;
     outfile.open(f_out.c_str());
-    
+
     for (unsigned long int ih=0; ih<nind; ih++)
     {
         outfile << indv_id[ih] << std::endl;
     }
-    
+
     outfile.close();
-    
+
     return true;
 }
 
@@ -63,7 +63,7 @@ bool format_hap::read_hap(Hap_SNP &hap_snp, std::string f_name, unsigned long in
 {
     std::string file_name=f_name;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
@@ -74,20 +74,20 @@ bool format_hap::read_hap(Hap_SNP &hap_snp, std::string f_name, unsigned long in
         throw("Error: can not open the file ["+file_name+"] to read.");
         return false;
     }
-    
+
     unsigned long int nhap=nind*2;
-    
-    
+
+
     if (show_iterations) std::cout << "      Allocating memory ..." << std::flush;
     hap_snp.hap.resize(nhap, std::vector<bool>(nsnp) );
     if (show_iterations) std::cout << "      done." << std::endl;
-    
-    
+
+
     std::vector<std::string> st1;
-    
+
     std::string line;
     unsigned long int j=0,i=0;
-    
+
     //cout << endl;
     // each line is one SNP
     while (std::getline(ifile, line)){
@@ -107,18 +107,19 @@ bool format_hap::read_hap(Hap_SNP &hap_snp, std::string f_name, unsigned long in
         j++;
     }
     if (show_iterations) std::cout << std::endl;
-    
+
     if (j!=nsnp)
     {
         throw("Error: in file ["+file_name+"].");
         return false;
     }
-    
+
     ifile.clear();
     ifile.close();
-    
+
     return true;
 }
+
 
 // .legend file has header
 unsigned long int format_hap::read_legend(Legend &legend, std::string f_name)
@@ -132,13 +133,13 @@ unsigned long int format_hap::read_legend(Legend &legend, std::string f_name)
         std::cout << "Error: can not open the file ["+file_name+"] to read." << std::endl;
         return 0;
     }
-    
+
     std::string id, al0,al1;
     unsigned long int pos;
-    
+
     // discard the first line which is header
     ifile >> id >> id >> id >> id;
-    
+
     unsigned long int j=0;
     while (ifile >> id >> pos >> al0 >> al1){
         legend.id.push_back(id);
@@ -147,10 +148,37 @@ unsigned long int format_hap::read_legend(Legend &legend, std::string f_name)
         legend.al1.push_back(al1);
         j++;
     }
-    
+
     ifile.clear();
     ifile.close();
-    
+
+    return j; // number of snps
+}
+
+
+// .indv file has NO header
+unsigned long int format_hap::read_indv(std::vector<std::string> &indv, std::string f_name)
+{
+    std::string sep=" ";
+    std::string file_name=f_name;
+    std::ifstream ifile(file_name.c_str());
+    if(!ifile) throw("Error: can not open the file ["+file_name+"] to read.");
+    if(!ifile)
+    {
+        std::cout << "Error: can not open the file ["+file_name+"] to read." << std::endl;
+        return 0;
+    }
+
+    std::string id;
+    unsigned long int j=0;
+    while (ifile >> id){
+        indv.push_back(id);
+        j++;
+    }
+
+    ifile.clear();
+    ifile.close();
+
     return j; // number of snps
 }
 
@@ -159,10 +187,10 @@ unsigned long int format_hap::read_legend(Legend &legend, std::string f_name)
  bool format_hap::read_hap_chr_old(std::vector<std::vector<bool> > &haps0_chr, std::string f_name, long int &nhap, long int &nsnp)
  {
  std::string sep=" ";
- 
+
  std::string file_name=f_name + ".hap";
  std::ifstream ifile(file_name.c_str());
- 
+
  if(!ifile)
  {
  cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
@@ -173,24 +201,24 @@ unsigned long int format_hap::read_legend(Legend &legend, std::string f_name)
  throw("Error: can not open the file ["+file_name+"] to read.");
  return false;
  }
- 
+
  long int n_r=CommFunc::ras_FileLineNumber(file_name);
  long int n_c=CommFunc::ras_FileColNumber(file_name, sep);
- 
+
  nhap=n_c;
  nsnp=n_r;
- 
- 
+
+
  std::cout << "      Allocating memory ..." << std::flush;
  haps0_chr.resize(nhap, std::vector<bool>(nsnp) );
  std::cout << "      done." << std::endl;
- 
- 
+
+
  std::vector<string> st1;
- 
+
  std::string line;
  long int j=0,i=0;
- 
+
  //cout << endl;
  while (std::getline(ifile, line)){
  if (j%1000==0) cout << "\r      " << j << " of " << n_r << " read ..." << std::flush;
@@ -202,12 +230,10 @@ unsigned long int format_hap::read_legend(Legend &legend, std::string f_name)
  j++;
  }
  cout << endl;
- 
+
  ifile.clear();
  ifile.close();
- 
+
  return true;
  }
  */
-
-

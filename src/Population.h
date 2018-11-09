@@ -23,21 +23,24 @@ public:
     unsigned long int st;
     unsigned long int en;
     unsigned long int hap_index;
+    std::string gen0_indv;
     int root_population; // when we have several populations, the genetic informtion comes from which pupolation
     std::vector<unsigned long int> mutation_pos;
-    
+
     part(void)
     {
         st=0;
         en=0;
         hap_index=0;
+        gen0_indv = "";
         root_population=0;
     }
-    part(unsigned long int s,unsigned long int e,unsigned long int i, int r)
+    part(unsigned long int s,unsigned long int e,unsigned long int i, std::string gen0_i, int r)
     {
         st=s;
         en=e;
         hap_index=i;
+        gen0_indv = gen0_i;
         root_population=r;
     }
     bool check_interval(unsigned long int t)
@@ -65,7 +68,7 @@ public:
     std::vector<double> bv_chr; // each human can have several phenotypes
     std::vector<double> additive_chr; // each human can have several phenotypes
     std::vector<double> dominance_chr; // each human can have several phenotypes
-    
+
 /*
     ~chromosome()
     {
@@ -91,7 +94,7 @@ public:
     std::vector<Chromatid> chromatid;
     Human_CV()
     {
-    
+
     }
     Human_CV(unsigned ncv)
     {
@@ -166,7 +169,7 @@ public:
     unsigned long int pos_female;
     bool inbreed; // true means can not marry, false mean can marry
     int num_offspring;
-    
+
     Couples_Info()
     {
         pos_male=0;
@@ -247,6 +250,7 @@ public:
     std::vector<double> _selection_func_par1; // for each generation
     std::vector<double> _selection_func_par2; // for each generation
     std::vector<std::vector<std::string> > _hap_legend_sample_name; // for each chr, with 3 columns (hap,legend,sample)
+    std::vector<std::string> _indv_id; // individual id from .indv file
     std::vector<std::string> _ref_vcf_address; // for each chr, with one column
     std::vector<rMap> _rmap;                                        // for each chr
     std::vector<MutationMap> _mutation_map;                         // for each chr
@@ -265,7 +269,7 @@ public:
     std::string _out_prefix;
     double _MM_percent; // Random mating percent (inds who have 2 spouses)
     bool _RM; // Random mating
-    
+
 
     // return
     std::vector<double> ret_var_mating_value;
@@ -278,10 +282,10 @@ public:
     std::vector<std::vector<double> > ret_var_G;
     std::vector<std::vector<double> > ret_var_E;
     std::vector<std::vector<double> > ret_h2;
-    
+
 private:
     int ras_get_ind_active_chr(int chr);
-    
+
 public:
     int ras_read_generation_info_file(std::string file_gen_info);
     int ras_read_hap_legend_sample_address_name(std::string f_name);
@@ -316,6 +320,3 @@ class Camp
 public:
     std::vector<Human> humans;
 };
-
-
-
