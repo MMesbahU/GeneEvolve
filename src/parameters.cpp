@@ -21,9 +21,9 @@ bool Parameters::read(std::vector<std::string> &vec_arg)
             npop++;
         }
     }
-    
+
     init(npop);
-    
+
     for (unsigned i=1; i<vec_arg.size(); i++)
     {
         if(vec_arg[i]=="--next_population"){
@@ -34,11 +34,11 @@ bool Parameters::read(std::vector<std::string> &vec_arg)
         else if(vec_arg[i]=="--file_gen_info"){
             _file_gen_info[ipop]=vec_arg[++i];
         }
-        else if(vec_arg[i]=="--file_hap_name"){
+        else if(vec_arg[i]=="--file_hap_name"){ // reference inputs
             _file_hap_name[ipop]=vec_arg[++i];
             _ref_is_hap = true;
         }
-        else if(vec_arg[i]=="--file_ref_vcf"){
+        else if(vec_arg[i]=="--file_ref_vcf"){ // reference inputs
             _file_ref_vcf[ipop]=vec_arg[++i];
             _ref_is_vcf = true;
         }
@@ -57,7 +57,7 @@ bool Parameters::read(std::vector<std::string> &vec_arg)
         else if(vec_arg[i]=="--vt_type"){
             _vt_type = std::stoi(vec_arg[++i]);
         }
-        
+
         /////////////////////////////////////////////////////////
         // for each phenotype
         else if(vec_arg[i]=="--file_cv_info"){ // for each pheno
@@ -149,12 +149,12 @@ bool Parameters::read(std::vector<std::string> &vec_arg)
             return false;
         }
     }
-    
+
     // set default value for optinal vectors:
     for (ipop=0; ipop<npop; ipop++)
     {
         unsigned pop_npheno=_file_cv_info[ipop].size();
-        
+
         // setting va=-1 and vd=-1 means that program will use the variance of real a and d in cv_info file
         // set _va=-1
         if(_va[ipop].size()==0)
@@ -207,8 +207,8 @@ bool Parameters::read(std::vector<std::string> &vec_arg)
     {
         _seed=ras_now_nanoseconds();
     }
-    
-    
+
+
     return true;
 }
 
@@ -218,9 +218,9 @@ bool Parameters::check(void)
     {
         return false;
     }
-    
+
     unsigned nphen=_file_cv_info[0].size();
-    
+
     //cehck the number of populations in the inputted options
     for (int ipop=0; ipop< _n_pop; ipop++)
     {
@@ -239,7 +239,7 @@ bool Parameters::check(void)
             std::cout << "Error: missing parameter [--file_recom_map] in population " << ipop+1 << "." << std::endl;
             return false;
         }
-        
+
         // check phenotypes prameters
         unsigned pop_npheno=_file_cv_info[ipop].size();
         if (pop_npheno==0)
@@ -302,7 +302,7 @@ bool Parameters::check(void)
             std::cout << "Error: The number of phenotypes should be the same for each population." << std::endl;
             return false;
         }
-        
+
         // check range for va, vd, ve, vf
         for (unsigned iphen=0; iphen<_va[ipop].size(); iphen++)
         {
@@ -349,23 +349,23 @@ bool Parameters::check(void)
             std::cout << "Error: The parameter [--MM] should be between 0 and 1. Error in population " << ipop+1 << "." << std::endl;
             return false;
         }
-        
+
     } // for ipop
-    
-    
+
+
     //_gamma
     if (_gamma.size()!=nphen)
     {
         std::cout << "Error: the number of [--gamma] must be equal to the number of phenotypes (" << nphen << ")." << std::endl;
         return false;
     }
-    
+
     //_seed
     if (_seed<=0)
     {
         std::cout << "Eroor: the parameter [--seed] should be positive." << std::endl;
     }
-    
+
     //check migration
     if (_file_gen_info.size()>1 && _file_migration.size()==0)
     {
@@ -376,20 +376,20 @@ bool Parameters::check(void)
     {
         std::cout << " Warning: when there is one population, the parameter [--file_migration] is redundant." << std::endl;
     }
-    
-    
+
+
     return true;
 }
 
 bool Parameters::print(void)
 {
     if (_help) return true; // no need to pritnt options
-    
+
     std::cout << std::endl;
     std::cout << " Options:" << std::endl;
     std::cout << std::endl;
     unsigned npop=_file_gen_info.size();
-    
+
     for (unsigned ipop=0; ipop<npop; ipop++){
         std::cout << "  Population " << ipop+1 << ":" << std::endl;
         std::cout << "      --file_gen_info          : [" << _file_gen_info[ipop] << "]" << std::endl;
@@ -400,7 +400,7 @@ bool Parameters::print(void)
         std::cout << "      --MM                     : [" << _MM_percent[ipop] << "]" << std::endl;
         std::cout << "      --RM                     : [" << (_RM[ipop] ? "On" : "Off") << "]" << std::endl;
         std::cout << "      --vt_type                : [" << _vt_type << "]" << std::endl;
-        
+
         unsigned pop_npheno=_file_cv_info[ipop].size();
         for (unsigned j=0; j<pop_npheno; j++)
         {
@@ -417,17 +417,17 @@ bool Parameters::print(void)
             std::cout << "        --beta                 : [" << _beta[ipop][j] << "]" << std::endl;
         }
     }
-    
+
     std::cout << "  Immigration parameters" << std::endl;
     std::cout << "      --file_migration         : [" << _file_migration << "]" << std::endl;
-    
+
     std::cout << "  Environmental effects specific to each population (for each phenotype)" << std::endl;
     unsigned pop_npheno=_file_cv_info[0].size();
     for (unsigned j=0; j<pop_npheno; j++)
     {
         std::cout << "      --gamma                  : [" << _gamma[j] << "]" << std::endl;
     }
-    
+
     std::cout << "  Output parameters" << std::endl;
     std::cout << "      --out_hap                : [" << (_out_hap ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --out_plink              : [" << (_out_plink ? "On" : "Off") << "]" << std::endl;
@@ -436,7 +436,7 @@ bool Parameters::print(void)
     std::cout << "      --out_interval           : [" << (_out_interval ? "On" : "Off") << "]" << std::endl;
     std::cout << "      --file_output_generations: [" << _file_output_generations << "]" << std::endl;
 
-    
+
     std::cout << "  Other parameters" << std::endl;
     std::cout << "      --prefix                 : [" << _prefix << "]" << std::endl;
     std::cout << "      --avoid_inbreeding       : [" << (_avoid_inbreeding ? "On" : "Off") << "]" << std::endl;
@@ -445,8 +445,3 @@ bool Parameters::print(void)
     std::cout << std::endl;
     return true;
 }
-
-
-
-
-

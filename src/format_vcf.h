@@ -33,9 +33,5 @@ namespace format_vcf
 {
     bool write_vcf_file(std::string file_out_name, vcf_structure &vcf_st);
     bool read_vcf_file(std::string filename, vcf_structure &vcf_st);
+    bool read_vcf_header_sample(std::string filename, std::vector<std::string> &sample);
 };
-
-
-
-
-

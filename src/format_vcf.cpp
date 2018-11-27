@@ -26,13 +26,13 @@ bool format_vcf::write_vcf_file(std::string file_out_name, vcf_structure &vcf_st
         std::cout << "Error: file [" + file_out_name + "] has problem.2." << std::endl;
         return false;
     }
-    
+
     // write meta lines, starts with ##
     for (unsigned i=0; i<vcf_st.meta_lines.size(); i++)
     {
         outfile << vcf_st.meta_lines[i] << std::endl;
     }
-    
+
     // create head line, starts with #
     outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
     for (unsigned iind=0; iind<nind; iind++)
@@ -41,7 +41,7 @@ bool format_vcf::write_vcf_file(std::string file_out_name, vcf_structure &vcf_st
     }
     outfile << std::endl;
 
-    
+
     // data
     for (unsigned isnp=0; isnp<nsnp; isnp++)
     {
@@ -60,7 +60,7 @@ bool format_vcf::write_vcf_file(std::string file_out_name, vcf_structure &vcf_st
     }
 
     outfile.close();
-    
+
     return true;
 
 }
@@ -76,15 +76,15 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
     VcfFileReader inFile;
     VcfHeader header;
     VcfRecord record;
-    
-    
+
+
     ////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
     // primary analysis
 
     inFile.setSiteOnly(true); // true, if you dont want to read genotypes
     vector<int> importIndexList;
-    
+
     int numReadRecords = 0, numActualRecords=0;
     int failFilter=0, notBiallelic=0, inconsistent=0, otherChrom=0;
 
@@ -93,7 +93,7 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
         std::cout << "\n Program could NOT open file : " << filename << std::endl;
         return false;
     }
-    
+
     std::cout << "\n Loading VCF File     : " << filename << std::endl<<std::endl;
     int numSamples = header.getNumSamples();
     while (inFile.readRecord(record))
@@ -121,7 +121,7 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
             failFilter++;
         }
         char Rallele=0,Aallele=0;
-        
+
         if (strlen(refAllele.c_str()) == 1 && strlen(altAllele.c_str()) == 1)
         {
             switch (refAllele[0])
@@ -167,13 +167,13 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
             else
             Aallele=5;
         }
-        
-        
+
+
         if(flag==0)
         {
             ++numReadRecords;
         }
-        
+
         numActualRecords++;
     }
     inFile.close();
@@ -189,12 +189,12 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
     vcf_st.FILTER.resize(numReadRecords);
     vcf_st.INFO.resize(numReadRecords);
     vcf_st.FORMAT.resize(numReadRecords);
-    
-    
+
+
     ////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
     // secondary analysis
-    
+
     //inFile.setSiteOnly(true); // if you dont want to read genotypes
     inFile.setSiteOnly(false);  // if you want to read genotypes
     numReadRecords = 0, numActualRecords=0;
@@ -214,11 +214,11 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
     {
         vcf_st.SAMPLES[i] = header.getSampleName(i);
     }
-    
-    
+
+
     while (inFile.readRecord(record))
     {
-        
+
         int flag=0;
         std::string cno       = record.getChromStr();
         int bp                = record.get1BasedPosition();
@@ -232,8 +232,8 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
         std::string currID    = cno + ":" + std::to_string(bp);
         if(id==".")
             id=currID;
-        
-        
+
+
         if (record.getNumAlts()>1)
         {
             notBiallelic++;
@@ -243,7 +243,7 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
         {
             failFilter++;
         }
-        
+
         char Rallele=0,Aallele=0;
         if (strlen(refAllele.c_str()) == 1 && strlen(altAllele.c_str()) == 1)
         {
@@ -290,8 +290,8 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
             else
             Aallele=5;
         }
-        
-        
+
+
         if(flag==0)
         {
             vcf_st.CHROM[numReadRecords]=cno;
@@ -303,7 +303,7 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
             vcf_st.FILTER[numReadRecords]=filter;
             vcf_st.INFO[numReadRecords]=info;
             vcf_st.FORMAT[numReadRecords]=format;
-            
+
             ////////////////////////////////////////////////
             // for samples
             for (int i = 0; i<numSamples; i++)
@@ -322,16 +322,16 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
                 //    std::cout << " Most probably a corrupted VCF file. Please check input VCF file !!! " << std::endl;
                 //    return false;
                 //}
-                
-                
+
+
                 for (int j = 0; j<record.getNumGTs(i); j++) // for j=0,1. because it is biallelic
                 {
-                    
+
                     int alleleIndex = record.getGT(i, j); // should be 0 or 1
                     //std::cout << "     record.getGT(i,j)=" << alleleIndex << std::endl;
                     vcf_st.data[2*i+j][numReadRecords] = (bool)alleleIndex; // data = nhap*nsnp with 0=REF=false, 1=true=ALT. In C, 0 means false
                 }
-                
+
             } // for samples
 
             ++numReadRecords;
@@ -339,14 +339,14 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
         numActualRecords++;
         importIndexList.push_back(flag);
     }// while
-    
+
     std::cout << std::endl;
     std::cout << " Number of Markers read from VCF File                : " << numActualRecords << std::endl;
     std::cout << " Number of Markers with more than One Allele         : " << notBiallelic << std::endl;
     std::cout << " Number of Markers failing FILTER = PASS             : " << failFilter << std::endl;
     std::cout << " Number of Markers with inconsistent Ref/Alt Allele  : " << inconsistent << std::endl;
     std::cout << " Number of Markers on other chromosomes (Non-Ref)    : " << otherChrom << std::endl;
-    
+
     if(numActualRecords==0)
     {
         std::cout << std::endl;
@@ -356,13 +356,35 @@ bool format_vcf::read_vcf_file(std::string filename, vcf_structure &vcf_st)
         return false;
     }
     inFile.close();
-    
-    
+
+
     return true;
 
 }
 
 
+// output: std::vector<std::string> sample;
+bool format_vcf::read_vcf_header_sample(std::string filename, std::vector<std::string> &sample)
+{
+    VcfFileReader inFile;
+    VcfHeader header;
+    
+    inFile.setSiteOnly(true); // true, if you dont want to read genotypes
 
 
+    if (!inFile.open(filename.c_str(), header))
+    {
+        std::cout << "\n Program could NOT open file : " << filename << std::endl;
+        return false;
+    }
 
+    int numSamples = header.getNumSamples();
+
+    sample.resize(numSamples);
+    std::cout << " numSamples=" << numSamples << std::endl;
+    for (int i=0; i<numSamples; i++)
+    {
+        sample[i] = header.getSampleName(i);
+    }
+
+}

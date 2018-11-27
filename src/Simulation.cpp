@@ -173,6 +173,17 @@ bool Simulation::ras_init_parameters(void)
     _ref_is_vcf = par._ref_is_vcf;
 
 
+    // check ref
+    if (_ref_is_vcf)
+    {
+        if (_ref_is_hap)
+        {
+            std::cout << "Warning: use either [--file_hap_name] or [--file_ref_vcf]. We use [--file_ref_vcf]." << std::endl;
+        }
+        _ref_is_hap = false;
+    }
+
+
     _Pop_info_prev_gen.resize(_n_pop); // to save mating_value for the previous generation, for each population
     _gen0_SV_var.resize(_n_pop);
     _gen0_SV_mean.resize(_n_pop);
@@ -231,17 +242,33 @@ bool Simulation::ras_init_parameters(void)
         //Number of chromosomes
         int nl=0;
         int nchr=0;
-        if (par._file_hap_name[ipop].size()>0)
+        if (_ref_is_hap)
         {
             nl=population[ipop].ras_read_hap_legend_sample_address_name(par._file_hap_name[ipop]);
             nchr=population[ipop]._hap_legend_sample_name.size();
         }
-        if (par._file_ref_vcf[ipop].size()>0)
+        // read vcf files and add ind id into population[ipop]._indv_id
+        if (_ref_is_vcf)
         {
             nl=population[ipop].ras_read_file_ref_vcf_address(par._file_ref_vcf[ipop]);
             nchr=population[ipop]._ref_vcf_address.size();
+            // add ind id into population[ipop]._indv_id
+            std::string fname_vcf = population[ipop]._ref_vcf_address[0];
+            std::vector<std::string> indv;
+            if (format_vcf::read_vcf_header_sample(fname_vcf, indv))
+            {
+                population[ipop]._indv_id = indv;
+            }
+            else
+            {
+                std::cout << "Error: read_vcf_header_sample.";
+                return false;
+            }
+
         }
+
         population[ipop]._nchr=nchr;
+
 
         // ToDo: nl is always equal to nchr, double check it and remove the following lines
         if(nl!=nchr)
@@ -253,8 +280,8 @@ bool Simulation::ras_init_parameters(void)
 
 
         ///////////////////////////
-        // check the number of individuals in .invd and .hap file
-        if (population[ipop]._hap_legend_sample_name.size()>0)
+        // check the number of individuals in .invd and .hap file and add ind id into population[ipop]._indv_id
+        if (_ref_is_hap)
         {
             std::vector<unsigned long int> n_ind(nchr,0);
             for (int ichr=0; ichr<nchr; ichr++)
@@ -361,7 +388,7 @@ bool Simulation::ras_init_parameters(void)
             }
 
             // check CVs
-            if(population[ipop]._hap_legend_sample_name.size()>0)
+            if(_ref_is_hap)
             {
                 for (int ichr=0; ichr<nchr; ichr++)
                 {
@@ -2855,6 +2882,8 @@ bool Simulation::ras_initial_human_gen0(int ipop)
     //_Pop_info_prev_gen[ipop].mating_value.resize(n_people,0); // for gen0, set them to 0
     std::cout << "        nhaps = " << nhaps << std::endl;
 
+    if (_debug)
+        std::cout << " debug, [ras_initial_human_gen0], loc 1, nchr: " << nchr << std::endl;
 
 
     for (unsigned long int i=0; i<n_people; i++)
@@ -2877,9 +2906,14 @@ bool Simulation::ras_initial_human_gen0(int ipop)
         population[ipop].h[i].ID_Fathers_Mother=i;
         population[ipop].h[i].ID_Mothers_Father=i;
         population[ipop].h[i].ID_Mothers_Mother=i;
+        if (_debug)
+            std::cout << " debug, [ras_initial_human_gen0], loc 5, i: " << i << std::endl;
 
 
     }
+
+    if (_debug)
+        std::cout << " debug, [ras_initial_human_gen0], loc 2" << std::endl;
 
     // create random normal for common effect for gen 0
     for (int iphen=0; iphen<nphen; iphen++) // for pheno

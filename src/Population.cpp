@@ -13,34 +13,34 @@
 int Population::ras_read_generation_info_file(std::string file_gen_info)
 {
     char sep=' ';
-    
+
     std::string file_name=file_gen_info;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
         return 0;
     }
-    
+
     if (CommFunc::ras_FileColNumber(file_name," ") !=6 )
     {
         std::cout << "Error: file ["+ file_name +"] must have 6 columns: pop_size, mat_cor, offspring_dist, selection_func, selection_func_par1 and selection_func_par2." << std::endl;
         return 0;
     }
-    
+
     std::vector<std::string> st1;
-    
+
     std::string line;
     int ngen=0;
-    
+
     // discard the first line which is header
     std::getline(ifile, line);
 
     while (std::getline(ifile, line)){
         std::istringstream iss(line);
         std::string token;
-        
+
         int ps;
         double mc;
         std::string offspring_d;
@@ -65,7 +65,7 @@ int Population::ras_read_generation_info_file(std::string file_gen_info)
         selection_func_p1=std::stod(token);
         std::getline(iss, token, sep); //selection_func_p2
         selection_func_p2=std::stod(token);
-        
+
         if(mc>1 || mc<-1)
         {
             mc=0;
@@ -91,7 +91,7 @@ int Population::ras_read_generation_info_file(std::string file_gen_info)
         _selection_func_par2.push_back(selection_func_p2);
         ngen++;
     }
-    
+
     return ngen;
 }
 
@@ -103,22 +103,22 @@ int Population::ras_read_generation_info_file(std::string file_gen_info)
 int Population::ras_read_hap_legend_sample_address_name(std::string f_name)
 {
     std::string sep=" ";
-    
+
     _hap_legend_sample_name.clear();
     std::string file_name=f_name;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
         return 0;
     }
-    
+
     std::vector<std::string> st1;
-    
+
     std::string line;
     int i=0;
-    
+
     // discard first line which is heder
     std::getline(ifile, line);
     //cout << endl;
@@ -137,7 +137,7 @@ int Population::ras_read_hap_legend_sample_address_name(std::string f_name)
         _hap_legend_sample_name.push_back(v1);
         i++;
     }
-    
+
     return i; // number of lines read
 }
 
@@ -149,25 +149,24 @@ int Population::ras_read_hap_legend_sample_address_name(std::string f_name)
 int Population::ras_read_file_ref_vcf_address(std::string f_name)
 {
     std::string sep=" ";
-    
+
     _ref_vcf_address.clear();
     std::string file_name=f_name;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
         return 0;
     }
-    
+
     std::vector<std::string> st1;
-    
+
     std::string line;
     int i=0;
-    
+
     // discard first line which is heder
     std::getline(ifile, line);
-    //cout << endl;
     _all_active_chrs.clear();
     while (std::getline(ifile, line)){
         std::istringstream iss(line);
@@ -179,7 +178,7 @@ int Population::ras_read_file_ref_vcf_address(std::string f_name)
         _ref_vcf_address.push_back(c_vcf);
         i++;
     }
-    
+
     return i; // number of lines read
 }
 
@@ -199,26 +198,26 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
 {
     unsigned long int file_ncol=4;
     _pheno_scheme[iphen]._cv_info.resize(_nchr);
-    
+
     char sep=' ';
-    
+
     std::string file_name=f_name;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std:: cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
         return 0;
     }
-    
+
     if(CommFunc::ras_FileColNumber(file_name," ") != file_ncol)
     {
        std::cout << "Error: file ["+ file_name +"] should have " << file_ncol << " columns." << std::endl;
        return 0;
     }
-    
+
     std::string line;
-    
+
     int i=0;
     // this file has header
     // discard the first line which is heder
@@ -227,7 +226,7 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
     while (std::getline(ifile, line)){
         std::istringstream iss(line);
         std::string token;
-        
+
         int chr;
         unsigned long int bp;
         double genetic_value_a, genetic_value_d;
@@ -243,7 +242,7 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
             genetic_value_a=std::stod(token);
             std::getline(iss, token, sep);
             genetic_value_d=std::stod(token);
-            
+
             _pheno_scheme[iphen]._cv_info[j].bp.push_back(bp);
             _pheno_scheme[iphen]._cv_info[j].genetic_value_a.push_back(genetic_value_a);
             _pheno_scheme[iphen]._cv_info[j].genetic_value_d.push_back(genetic_value_d);
@@ -253,10 +252,10 @@ int Population::ras_read_cv_info_dominace_model_file(std::string f_name, int iph
             std::cout << "Error:  In file ["+ file_name +"]. Chromosome [" << chr << "] is not defined in the --file_hap_name [file]." << std::endl;
             return 0;
         }
-        
+
         i++;
     }
-    
+
     return i;
 }
 
@@ -268,7 +267,7 @@ int Population::ras_get_ind_active_chr(int chr)
 {
     for (int j=0; j<(int)_all_active_chrs.size(); j++)
         if (_all_active_chrs[j]==chr) return j;
-    
+
     return -1;
 }
 
@@ -283,15 +282,15 @@ int Population::ras_read_cvs_address_name(std::string f_name, int iphen)
     _pheno_scheme[iphen]._name_cv_hap.resize(_nchr,"");
     std::string file_name=f_name;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
         return 0;
     }
-    
+
     std::string line;
-    
+
     int i=0;
     //cout << endl;
     while (std::getline(ifile, line)){
@@ -305,7 +304,7 @@ int Population::ras_read_cvs_address_name(std::string f_name, int iphen)
             _pheno_scheme[iphen]._name_cv_hap[j]=s1;
         i++;
     }
-    
+
     return i;
 }
 
@@ -351,22 +350,22 @@ unsigned long int Population::ras_read_rmap(std::string f_name)
 {
     _rmap.resize(_nchr);
     char sep=' ';
-    
+
     std::string file_name=f_name;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
         return 0;
     }
-    
+
     std::string line;
-    
+
     unsigned long int i=0;
     // discard first line which is heder
     std::getline(ifile, line);
-    
+
     // we just read rmaps with chr in '_all_active_chrs'
     while (std::getline(ifile, line)){
         std::istringstream iss(line);
@@ -384,7 +383,7 @@ unsigned long int Population::ras_read_rmap(std::string f_name)
             bp=std::stod(token); // it should be stod and not stol, because in the input file we may have 1.2e+4
             std::getline(iss, token, sep);
             cM=std::stod(token);
-            
+
             //4 1.91e+08 220.003969423109
             //if(chr==4) cout << chr << " qqqqqqq " << bp  << " " << cM<< endl;
             _rmap[j].bp.push_back(bp);
@@ -392,12 +391,12 @@ unsigned long int Population::ras_read_rmap(std::string f_name)
         }
         i++;
     }
-    
+
     // compute bp_dist_in_rmap
     for (int ichr=0; ichr<_nchr; ichr++)
         _rmap[ichr].bp_dist_in_rmap=_rmap[ichr].bp[1]-_rmap[ichr].bp[0];
-    
-    
+
+
     if (_debug)
     {
         for (int ichr=0; ichr<_nchr; ichr++)
@@ -410,7 +409,7 @@ unsigned long int Population::ras_read_rmap(std::string f_name)
             std::cout << std::endl;
         }
     }
-    
+
     return i;
 }
 
@@ -422,22 +421,22 @@ unsigned long int Population::ras_read_file_mutation(std::string f_name)
 {
     _mutation_map.resize(_nchr);
     char sep=' ';
-    
+
     std::string file_name=f_name;
     std::ifstream ifile(file_name.c_str());
-    
+
     if(!ifile)
     {
         std::cout << "Error: can not open the file ["+ file_name +"] to read." << std::endl;
         return 0;
     }
-    
+
     std::string line;
-    
+
     unsigned long int i=0;
     // discard first line which is heder
     std::getline(ifile, line);
-    
+
     // we just read _mutation_map with chr in '_all_active_chrs'
     while (std::getline(ifile, line)){
         std::istringstream iss(line);
@@ -457,14 +456,14 @@ unsigned long int Population::ras_read_file_mutation(std::string f_name)
             mutation_rate=std::stod(token);
             // check its range
             if (mutation_rate<0 || mutation_rate>1) mutation_rate=0;
-            
+
             //4 1.91e+08 220.003969423109
             _mutation_map[j].bp.push_back(bp);
             _mutation_map[j].mutation_rate.push_back(mutation_rate);
         }
         i++;
     }
-    
+
     return i; // number of read lines (zero based)
 }
 
@@ -479,8 +478,8 @@ bool Population::ras_compute_recom_prob(void)
         for (unsigned long int k=1; k<_rmap[chr].cM.size(); k++)
             _recom_prob[chr][k]=(_rmap[chr].cM[k]-_rmap[chr].cM[k-1])*.01;
     }
-    
-    
+
+
     /*
      This part tests the accuracy of this function
      for (int chr=0; chr<_nchr; chr++)
@@ -494,7 +493,7 @@ bool Population::ras_compute_recom_prob(void)
      fo.close();
      }
      */
-    
+
     if (_debug)
     {
         for (int chr=0; chr<_nchr; chr++)
@@ -514,7 +513,7 @@ bool Population::ras_save_human_info(int gen_num)
     std::ofstream file_human;
     file_human.open((_out_prefix+".info.pop"+std::to_string(_pop_num+1)+".gen"+ std::to_string(gen_num)+".txt").c_str());
     int npheno=_pheno_scheme.size();
-    
+
     //create header
     file_human << "ID" << sep;
     file_human << "ID_Father" << sep;
@@ -537,7 +536,7 @@ bool Population::ras_save_human_info(int gen_num)
     file_human << "MV" << sep;
     file_human << "SV" << sep;
     file_human << "SV_f" << std::endl;
-    
+
     unsigned long int n_human=h.size();
     for (unsigned long int i=0; i<n_human; i++)
     {
@@ -722,7 +721,7 @@ double Population::compute_couple_cor_bv(int iphen)
     unsigned long int n_couples=_couples_info.size();
     std::vector<double> bv_male(n_couples);
     std::vector<double> bv_female(n_couples);
-    
+
     for (unsigned long int i=0; i<n_couples; i++)
     {
         unsigned long int pos_m=_couples_info[i].pos_male;
@@ -739,7 +738,7 @@ double Population::compute_couple_cor_phen(int iphen)
     unsigned long int n_couples = _couples_info.size();
     std::vector<double> phen_male(n_couples);
     std::vector<double> phen_female(n_couples);
-    
+
     for (unsigned long int i=0; i<n_couples; i++)
     {
         unsigned long int pos_m=_couples_info[i].pos_male;
@@ -756,7 +755,7 @@ double Population::compute_couple_cor_mating_value(void)
     unsigned long int n_couples = _couples_info.size();
     std::vector<double> b_male(n_couples);
     std::vector<double> b_female(n_couples);
-    
+
     for (unsigned long int i=0; i<n_couples; i++)
     {
         unsigned long int pos_m=_couples_info[i].pos_male;
@@ -766,6 +765,3 @@ double Population::compute_couple_cor_mating_value(void)
     }
     return CommFunc::cor(b_male,b_female);
 }
-
-
-
