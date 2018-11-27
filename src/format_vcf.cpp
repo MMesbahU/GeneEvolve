@@ -368,7 +368,7 @@ bool format_vcf::read_vcf_header_sample(std::string filename, std::vector<std::s
 {
     VcfFileReader inFile;
     VcfHeader header;
-    
+
     inFile.setSiteOnly(true); // true, if you dont want to read genotypes
 
 
@@ -381,7 +381,6 @@ bool format_vcf::read_vcf_header_sample(std::string filename, std::vector<std::s
     int numSamples = header.getNumSamples();
 
     sample.resize(numSamples);
-    std::cout << " numSamples=" << numSamples << std::endl;
     for (int i=0; i<numSamples; i++)
     {
         sample[i] = header.getSampleName(i);

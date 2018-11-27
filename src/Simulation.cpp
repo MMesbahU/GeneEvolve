@@ -258,6 +258,8 @@ bool Simulation::ras_init_parameters(void)
             if (format_vcf::read_vcf_header_sample(fname_vcf, indv))
             {
                 population[ipop]._indv_id = indv;
+                std::cout << "     Number of individulas in VCF file = " << population[ipop]._indv_id.size() << std::endl;
+
             }
             else
             {
