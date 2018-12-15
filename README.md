@@ -1,6 +1,11 @@
 # GeneEvolve
 A fast and memory efficient forward-time simulator of realistic whole-genome sequence and SNP data
 
+
+This work is published in Bioinformatics (2017), click [here](https://academic.oup.com/bioinformatics/article/33/2/294/2525714) to download it.
+
+
+
 GeneEvolve is a user-friendly and efficient population genetics simulator that handles complex evolutionary scenarios and generates individual-level phenotypes and realistic whole-genome sequence or SNP data.
 GeneEvolve runs forward-in-time, which allows it to provide a wide range of scenarios for mating systems, selection, population size and structure, migration, recombination, and environmental effects.
 
