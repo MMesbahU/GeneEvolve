@@ -18,10 +18,10 @@
 class Legend
 {
 public:
-    std::vector<std::string> id;
-    std::vector<unsigned long int> pos;
-    std::vector<std::string> al0;
-    std::vector<std::string> al1;
+    std::vector<std::string> id; // len is nsnp
+    std::vector<unsigned long int> pos; // len is nsnp
+    std::vector<std::string> al0; // len is nsnp
+    std::vector<std::string> al1; // len is nsnp
 };
 
 class Hap_SNP

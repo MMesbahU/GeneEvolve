@@ -52,7 +52,7 @@ public:
     // for Fprime NewtonRaphson
     //typedef double (Simulation::*function_1d)(double); // function_1d is a pointer to a double f(double) function
     std::vector<Pop_phen_info> _Pop_info_prev_gen; // Saving mating_value for the next generation (for each population)
-    
+
     // environmental effects specific to each_population
     std::vector<double> _gamma; // for each phenotype and all the populations
     std::vector<double> _gen0_SV_var;
@@ -60,7 +60,7 @@ public:
     bool _ref_is_hap;
     bool _ref_is_vcf;
 
-    
+
 private:
     bool ras_init_parameters(void);
     bool ras_init_generation0(void);
@@ -70,7 +70,7 @@ private:
     bool read_migration_file(void);
     bool ras_do_migration(int gen_ind);
     bool ras_save_genotypes(int gen_num);
-    
+
     std::vector<part> recombine(chromosome &d1, int starting_haplotype, std::vector<unsigned long int> &recombination_locs);
     void modify_part_for_mutation_pos(part &p);
     std::vector<unsigned long int> ras_sim_loc_rec(std::vector<double> &recom_prob, rMap &rmap, unsigned seed);
@@ -96,7 +96,7 @@ private:
     bool ras_save_human_info_to_Pop_info_prev_gen(int ipop);
     bool ras_fill_Pop_info_prev_gen_for_gen0_prev(int ipop);
 
-    
+
     // reading the inputed hap files
     bool ras_read_hap_legend_sample_chr(std::vector<Legend> &pops_legend, std::vector<Hap_SNP> &pops_hap, int ichr);
 
@@ -105,7 +105,7 @@ private:
     bool ras_convert_interval_to_hap_matrix(int ipop, std::vector<Hap_SNP> &pops_hap, std::vector<Legend> &pops_legend, int ichr, Hap_SNP &hap_snp);
     bool ras_convert_pop_to_indv(int ipop, std::vector<unsigned long int> &indv_id);
 
-    
+
     // dealing with plink .ped .map files
     bool ras_write_hap_to_plink_format(int gen_num, bool hap01=false);
     bool ras_convert_interval_to_format_plink(int ipop, std::vector<Hap_SNP> &pops_hap, std::vector<Legend> &pops_legend, int ichr, std::vector<std::vector<bool> > &matrix_plink_ped, plink_PED_ids &plink_ped_ids, plink_MAP &plink_map);
@@ -114,14 +114,16 @@ private:
 
     // dealing with interval (.int) file
     bool ras_write_hap_to_interval_format(int gen_num);
-    
-    
+
+
     // dealing with vcf files
     bool ras_write_vcf_to_vcf_format(int gen_num);
-    bool ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int gen_num, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr);
+    bool ras_convert_interval_from_vcf_to_vcf_structure(vcf_structure &vcf_out, int gen_num, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr);
     bool ras_read_vcf_pops_chr(std::vector<vcf_structure> &vcf_structure_pops, int ichr);
+    // vcf 2 hap
+    bool ras_write_vcf_to_hap_legend_sample(int gen_num);
+    bool ras_convert_interval_from_vcf_to_hap_matrix(std::vector<vcf_structure> vcf_structure_allpops_chr, int ipop, int ichr, Hap_SNP hap_snp);
 
-    
 
     bool ras_compute_mating_value_selection_value(int gen_num, int ipop);
     bool sim_environmental_effects_specific_to_each_population(int iphen);
@@ -143,7 +145,5 @@ private:
 
 public:
     bool run(void);
-    
+
 };
-
-

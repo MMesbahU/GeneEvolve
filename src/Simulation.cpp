@@ -1004,6 +1004,15 @@ bool Simulation::ras_save_genotypes(int gen_num)
                 return false;
             }
         }
+        if (_out_hap)
+        {
+            std::cout << "      Start writing in the [hap] format." << std::endl;
+            if (!ras_write_vcf_to_hap_legend_sample(gen_num))
+            {
+                std::cout << "Error in reading and writing haplotypes!" << std::endl;
+                return false;
+            }
+        }
 
 
     }
@@ -1038,6 +1047,11 @@ bool Simulation::ras_save_genotypes(int gen_num)
                 std::cout << "Error in reading and writing haplotypes!" << std::endl;
                 return false;
             }
+        }
+        if (_out_vcf)
+        {
+            std::cout << "Error: current version can't convert to VCF output format!" << std::endl;
+            return false;
         }
 
     }
@@ -1171,7 +1185,7 @@ bool Simulation::ras_convert_interval_to_hap_matrix(int ipop, std::vector<Hap_SN
             {
                 part p=population[ipop].h[ih].chr[ichr].Hap[ihaps][ip];
                 int root_pop=p.root_population;
-                for (unsigned long int ii=0; ii<pops_legend[root_pop].pos.size(); ii++)
+                for (unsigned long int ii=0; ii<nsnp; ii++)
                 {
                     if (p.check_interval(pops_legend[root_pop].pos[ii]))
                     {
@@ -1636,7 +1650,7 @@ bool Simulation::ras_write_vcf_to_vcf_format(int gen_num)
             std::cout << "      converting interval format to vcf file structure ..." << std::endl << std::flush;
 
             vcf_structure vcf_out;
-            if(!ras_convert_interval_to_vcf_structure(vcf_out, gen_num, ipop, ichr, vcf_structure_allpops_chr))
+            if(!ras_convert_interval_from_vcf_to_vcf_structure(vcf_out, gen_num, ipop, ichr, vcf_structure_allpops_chr))
                 return false;
 
             // writing the hap to plink
@@ -1653,7 +1667,7 @@ bool Simulation::ras_write_vcf_to_vcf_format(int gen_num)
 
 
 /// for one chr in one population
-bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, int gen_num, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr)
+bool Simulation::ras_convert_interval_from_vcf_to_vcf_structure(vcf_structure &vcf_out, int gen_num, int ipop, int ichr, std::vector<vcf_structure> &vcf_structure_allpops_chr)
 {
     // convert hap0 matrix to matrix_hap according to Human interval information
     unsigned long int n_human=population[ipop].h.size();
@@ -1715,7 +1729,6 @@ bool Simulation::ras_convert_interval_to_vcf_structure(vcf_structure &vcf_out, i
                             vcf_out.data[2*ih+ihaps][ii] = !vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
                         else // no mutation
                             vcf_out.data[2*ih+ihaps][ii] = vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
-
                     }
                 }
             }
@@ -1746,6 +1759,96 @@ bool Simulation::ras_read_vcf_pops_chr(std::vector<vcf_structure> &vcf_structure
 
 
 
+// NEW
+bool Simulation::ras_write_vcf_to_hap_legend_sample(int gen_num)
+{
+    int n_chr=population[0].h[0].chr.size();
+    for (int ichr=0; ichr<n_chr; ichr++) // for chr
+    {
+        // reading vcf files for all populations. Because of migration we should read all the pops
+        std::cout << "    Start chr " << _all_active_chrs[ichr] << std::endl << std::flush;
+        std::cout << "       reading vcf files ..." << std::endl << std::flush;
+
+        std::vector<vcf_structure> vcf_structure_allpops_chr(_n_pop); // for all populations
+        // for all populations
+        if (!ras_read_vcf_pops_chr(vcf_structure_allpops_chr, ichr))
+        {
+            return false;
+        }
+        std::cout << "       done." << std::endl << std::flush;
+
+
+        //convert hap matrix to matrix_hap according to human interval information
+        for (int ipop=0; ipop<_n_pop; ipop++) // for pops
+        {
+            std::cout << "    --Population: " << (ipop+1) << std::endl;
+
+            std::cout << "      converting to hap file matrix" << std::endl << std::flush;
+            Hap_SNP hap_snp;
+            ras_convert_interval_from_vcf_to_hap_matrix(vcf_structure_allpops_chr, ipop, ichr, hap_snp);
+
+            // writing to the hap file
+            std::cout << "      writing" << std::endl << std::flush;
+            std::string outfile_name = _out_prefix + ".pop" + std::to_string(ipop+1) + ".gen" + std::to_string(gen_num) + ".chr" + std::to_string(_all_active_chrs[ichr]);
+            format_hap::write_hap(hap_snp, outfile_name);
+
+            // writing to indv file
+            std::vector<unsigned long int> indv_id;
+            ras_convert_pop_to_indv(ipop, indv_id);
+            format_hap::write_indv(indv_id, outfile_name);
+
+        }
+        std::cout << "    --------------------------------------------------------------" << std::endl;
+    }
+    return true;
+}
+
+
+
+bool Simulation::ras_convert_interval_from_vcf_to_hap_matrix(std::vector<vcf_structure> vcf_structure_allpops_chr, int ipop, int ichr, Hap_SNP hap_snp)
+{
+    unsigned long int n_human=population[ipop].h.size();
+    unsigned long int nsnp=vcf_structure_allpops_chr[ipop].ID.size();
+    std::cout << "      n_human=" << n_human << std::endl;
+    int n_chromatid=population[ipop].h[0].chr[ichr].Hap.size(); // =2
+
+    std::cout << "      Allocating memory ..." << std::flush;
+    hap_snp.hap.resize(n_human*2, std::vector<bool> (nsnp) );
+    std::cout << "      done." << std::endl;
+
+
+    for (unsigned long int ih=0; ih<n_human; ih++) // for humans
+    {
+        for (int ihaps=0; ihaps<n_chromatid; ihaps++) // for haps
+        {
+            int n_parts=(int)population[ipop].h[ih].chr[ichr].Hap[ihaps].size();
+            for (int ip=0; ip<n_parts; ip++) // for parts
+            {
+                part p=population[ipop].h[ih].chr[ichr].Hap[ihaps][ip];
+                int root_pop=p.root_population;
+                for (unsigned long int ii=0; ii<nsnp; ii++) // for SNPs
+                {
+                    if (p.check_interval(vcf_structure_allpops_chr[root_pop].POS[ii]))
+                    {
+                        if (p.hap_index >= vcf_structure_allpops_chr[root_pop].data.size())// nhaps
+                        {
+                            std::cout << "Error: p.hap_index=" << p.hap_index << " is not in range, ih=" << ih << std::endl;
+                            return false;
+                        }
+                        // check mutation
+                        std::vector<unsigned long int>::iterator it = find(p.mutation_pos.begin(), p.mutation_pos.end(), vcf_structure_allpops_chr[root_pop].POS[ii]);
+                        if (it != p.mutation_pos.end()) // mutation
+                            hap_snp.hap[2*ih+ihaps][ii] = !vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
+                        else // no mutation
+                            hap_snp.hap[2*ih+ihaps][ii] = vcf_structure_allpops_chr[root_pop].data[p.hap_index][ii];
+                    }
+                }
+            }
+        }
+    }
+    return true;
+
+}
 
 
 
