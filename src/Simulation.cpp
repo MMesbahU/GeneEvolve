@@ -3482,6 +3482,11 @@ bool Simulation::read_file_output_generation_list(void)
     std::string line;
     while (getline(ifile, line))
     {
+        if (line.size()==0)
+        {
+            continue;
+        }
+
         try
         {
             int d = std::stod(line);
@@ -3489,7 +3494,7 @@ bool Simulation::read_file_output_generation_list(void)
         }
         catch(...)// or catch(const std::exception& e)
         {
-            std::cout << "Error: Invalid input number in [file_output_generations]!" << std::endl;
+            std::cout << "Error: Invalid or blank input number in [file_output_generations]!" << std::endl;
             return false;
         }
     }
