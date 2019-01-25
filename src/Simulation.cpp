@@ -432,7 +432,7 @@ bool Simulation::ras_init_parameters(void)
         population[ipop].ras_compute_recom_prob();
         if(_debug)
         {
-            std::cout << "population[ipop].ras_compute_recom_prob() done.";
+            std::cout << "Debug: population[ipop].ras_compute_recom_prob() done." << std::endl;
         }
 
 
@@ -483,7 +483,7 @@ bool Simulation::ras_init_parameters(void)
 
     if(_debug)
     {
-        std::cout << "Done: Simulation::ras_init_parameters --> for (int ipop=0; ipop<_n_pop; ipop++)";
+        std::cout << "Debug: Simulation::ras_init_parameters --> for (int ipop=0; ipop<_n_pop; ipop++) done." << std::endl;
     }
 
     int nphen = par._va[0].size();
@@ -510,7 +510,7 @@ bool Simulation::ras_init_parameters(void)
             return false;
         }
         if (_debug)
-            std::cout << " read the file_output_generations with " << _file_output_generations_list.size() << " rows." << std::endl;
+            std::cout << "Debug: read the file_output_generations with " << _file_output_generations_list.size() << " rows." << std::endl;
     }
 
 
@@ -519,7 +519,7 @@ bool Simulation::ras_init_parameters(void)
 
     if(_debug)
     {
-        std::cout << "Done: Simulation::ras_init_parameters";
+        std::cout << "Debug: [Simulation::ras_init_parameters] done.";
     }
     return true;
 }
@@ -2087,8 +2087,8 @@ bool Simulation::random_mate(int ipop, int gen_ind)
 
     if (_debug)
     {
-        std::cout << "Simulation::random_mate; seed=" << seed << std::endl;
-        std::cout << "Simulation::random_mate; n_h=" << n_h << std::endl;
+        std::cout << "Debug: Simulation::random_mate; seed=" << seed << std::endl;
+        std::cout << "Debug: Simulation::random_mate; n_h=" << n_h << std::endl;
     }
 
     // MARRIAGEABLE PEOPLE - this section creates an equal number of males and females who will be paired off below
@@ -2166,8 +2166,8 @@ bool Simulation::assort_mate(int ipop, int gen_ind)
     unsigned long int n_h =(int)population[ipop].h.size();
     if (_debug)
     {
-        std::cout << "Simulation::random_mate; seed=" << seed << std::endl;
-        std::cout << "Simulation::random_mate; n_h=" << n_h << std::endl;
+        std::cout << "Debug: Simulation::random_mate; seed=" << seed << std::endl;
+        std::cout << "Debug: Simulation::random_mate; n_h=" << n_h << std::endl;
     }
 
 
@@ -2600,7 +2600,7 @@ double Simulation::ras_compute_bv_part(std::vector<part> &p, int ichr, int iphen
                 {
                     cv_val=1-cv_val;
                     if (_debug)
-                        std::cout << "mutation in cv" << std::endl;
+                        std::cout << "Debug: mutation in cv." << std::endl;
                 }
                 ret += cv_val * alpha;
                 // we can't use coutinue, since it is possible that there are more than 1 cv in this interval
@@ -2761,7 +2761,7 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
                 if (it != h.chr[ichr].Hap[0][j].mutation_pos.end())
                 {
                     cv_val = !cv_val;
-                    if (_debug) std::cout << "mutation in cv" << std::endl;
+                    if (_debug) std::cout << "Debug: mutation in cv." << std::endl;
                 }
 
                 h_cv.chromatid[0].cv[icv] = cv_val;
@@ -2790,7 +2790,7 @@ Human_CV Simulation::ras_find_cv(Human &h, unsigned ichr, unsigned iphen, unsign
                 if (it != h.chr[ichr].Hap[1][j].mutation_pos.end())
                 {
                     cv_val = !cv_val;
-                    if (_debug) std::cout << "mutation in cv" << std::endl;
+                    if (_debug) std::cout << "Debug: mutation in cv." << std::endl;
                 }
 
                 h_cv.chromatid[1].cv[icv] = cv_val;
@@ -3008,7 +3008,7 @@ bool Simulation::ras_initial_human_gen0(int ipop)
     std::cout << "        nhaps = " << nhaps << std::endl;
 
     if (_debug)
-        std::cout << " debug, [ras_initial_human_gen0], loc 1, nchr: " << nchr << std::endl;
+        std::cout << "Debug: [ras_initial_human_gen0], loc 1, nchr: " << nchr << std::endl;
 
 
     for (unsigned long int i=0; i<n_people; i++)
@@ -3032,13 +3032,13 @@ bool Simulation::ras_initial_human_gen0(int ipop)
         population[ipop].h[i].ID_Mothers_Father=i;
         population[ipop].h[i].ID_Mothers_Mother=i;
         if (_debug)
-            std::cout << " debug, [ras_initial_human_gen0], loc 5, i: " << i << std::endl;
+            std::cout << "Debug: [ras_initial_human_gen0], loc 5, i: " << i << std::endl;
 
 
     }
 
     if (_debug)
-        std::cout << " debug, [ras_initial_human_gen0], loc 2" << std::endl;
+        std::cout << "Debug: [ras_initial_human_gen0], loc 2" << std::endl;
 
     // create random normal for common effect for gen 0
     for (int iphen=0; iphen<nphen; iphen++) // for pheno
@@ -3056,7 +3056,7 @@ bool Simulation::ras_initial_human_gen0(int ipop)
     }
 
     if (_debug)
-        std::cout << " end of [ras_initial_human_gen0]" << std::endl;
+        std::cout << "Debug: end of [ras_initial_human_gen0]." << std::endl;
 
     return true;
 }
@@ -3480,8 +3480,18 @@ bool Simulation::read_file_output_generation_list(void)
     }
 
     std::string line;
-    while (getline(ifile, line)){
-        _file_output_generations_list.push_back(std::stod(line)); // 1-based index
+    while (getline(ifile, line))
+    {
+        try
+        {
+            int d = std::stod(line);
+            _file_output_generations_list.push_back(d); // 1-based index
+        }
+        catch(...)// or catch(const std::exception& e)
+        {
+            std::cout << "Error: Invalid input number in [file_output_generations]!" << std::endl;
+            return false;
+        }
     }
     return true;
 }
