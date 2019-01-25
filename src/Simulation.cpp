@@ -80,14 +80,19 @@ bool Simulation::run(void)
     std::cout << "                                INITIALIZATION                                 " << std::endl;
     std::cout << " ------------------------------------------------------------------------------" << std::endl;
 
-    if( !ras_init_parameters() )
+    if (!ras_init_parameters())
+    {
+        std::cout << "Error in ras_init_parameters";
         return false;
+    }
 
     std::cout << std::endl;
 
     if( !ras_init_generation0() )
+    {
+        std::cout << "Error in ras_init_generation0";
         return false;
-
+    }
     time_load = time(0) - time_prev;
     std::cout << std::endl << " Time taken for initialization = " << time_load << " seconds." << std::endl;
 
@@ -425,6 +430,10 @@ bool Simulation::ras_init_parameters(void)
         ///////////////////////////
         //recom_prob
         population[ipop].ras_compute_recom_prob();
+        if(_debug)
+        {
+            std::cout << "population[ipop].ras_compute_recom_prob() done.";
+        }
 
 
         /*
@@ -472,6 +481,11 @@ bool Simulation::ras_init_parameters(void)
 
     }
 
+    if(_debug)
+    {
+        std::cout << "Done: Simulation::ras_init_parameters --> for (int ipop=0; ipop<_n_pop; ipop++)";
+    }
+
     int nphen = par._va[0].size();
     _gamma.resize(nphen);
     for (int iphen=0; iphen<nphen; iphen++)
@@ -503,6 +517,10 @@ bool Simulation::ras_init_parameters(void)
     _all_active_chrs=population[0]._all_active_chrs;
     // todo: check they are equal for all the populations
 
+    if(_debug)
+    {
+        std::cout << "Done: Simulation::ras_init_parameters";
+    }
     return true;
 }
 
@@ -652,8 +670,10 @@ bool Simulation::ras_init_generation0(void)
     std::cout << "        VM                = " << vm  << " (Mb)" << std::endl;
     std::cout << "        RSS               = " << rss << " (Mb)" << std::endl;
 
-    if (_debug)
-        std::cout << " end of [ras_init]" << std::endl;
+    if(_debug)
+    {
+        std::cout << "Done: Simulation::ras_init_generation0";
+    }
 
     return true;
 }
