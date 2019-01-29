@@ -1835,7 +1835,7 @@ bool Simulation::ras_write_vcf_to_hap_legend_sample(int gen_num)
 
 
 
-bool Simulation::ras_convert_interval_from_vcf_to_hap_matrix(std::vector<vcf_structure> vcf_structure_allpops_chr, int ipop, int ichr, Hap_SNP hap_snp)
+bool Simulation::ras_convert_interval_from_vcf_to_hap_matrix(std::vector<vcf_structure> &vcf_structure_allpops_chr, int ipop, int ichr, Hap_SNP hap_snp)
 {
     unsigned long int n_human=population[ipop].h.size();
     unsigned long int nsnp=vcf_structure_allpops_chr[ipop].ID.size();

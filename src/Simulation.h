@@ -122,7 +122,7 @@ private:
     bool ras_read_vcf_pops_chr(std::vector<vcf_structure> &vcf_structure_pops, int ichr);
     // vcf 2 hap
     bool ras_write_vcf_to_hap_legend_sample(int gen_num);
-    bool ras_convert_interval_from_vcf_to_hap_matrix(std::vector<vcf_structure> vcf_structure_allpops_chr, int ipop, int ichr, Hap_SNP hap_snp);
+    bool ras_convert_interval_from_vcf_to_hap_matrix(std::vector<vcf_structure> &vcf_structure_allpops_chr, int ipop, int ichr, Hap_SNP hap_snp);
 
 
     bool ras_compute_mating_value_selection_value(int gen_num, int ipop);
