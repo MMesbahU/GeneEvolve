@@ -1432,7 +1432,7 @@ bool Simulation::ras_write_vcf_to_plink_format(int gen_num, bool hap01)
         {
             return false;
         }
-        std::cout << "       done." << std::endl << std::flush;
+        std::cout << "       reading vcf files done." << std::endl << std::flush;
 
 
         //convert hap matrix to matrix_hap according to human interval information
@@ -1659,7 +1659,7 @@ bool Simulation::ras_write_vcf_to_vcf_format(int gen_num)
         {
             return false;
         }
-        std::cout << "       done." << std::endl << std::flush;
+        std::cout << "       reading vcf files done." << std::endl << std::flush;
 
 
         //convert hap matrix to matrix_hap according to human interval information
@@ -1795,7 +1795,7 @@ bool Simulation::ras_write_vcf_to_hap_legend_sample(int gen_num)
         {
             return false;
         }
-        std::cout << "       done." << std::endl << std::flush;
+        std::cout << "       reading vcf files done." << std::endl << std::flush;
 
 
         //convert hap matrix to matrix_hap according to human interval information
@@ -1805,7 +1805,17 @@ bool Simulation::ras_write_vcf_to_hap_legend_sample(int gen_num)
 
             std::cout << "      converting to hap file matrix" << std::endl << std::flush;
             Hap_SNP hap_snp;
-            ras_convert_interval_from_vcf_to_hap_matrix(vcf_structure_allpops_chr, ipop, ichr, hap_snp);
+            if (!ras_convert_interval_from_vcf_to_hap_matrix(vcf_structure_allpops_chr, ipop, ichr, hap_snp))
+            {
+                std::cout << "Error in converting to hap file matrix." << std::endl;
+                return false;
+            }
+
+            if (_debug)
+            {
+                std::cout << "Debug: nhap=hap_snp.hap.size()=" << hap_snp.hap.size() << std::endl;
+                std::cout << "Debug: nsnp=hap_snp.hap[0].size()=" << hap_snp.hap[0].size() << std::endl;
+            }
 
             // writing to the hap file
             std::cout << "      writing" << std::endl << std::flush;
